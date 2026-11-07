@@ -393,10 +393,10 @@ export const BoxPlotChart: React.FC<BoxPlotChartProps> = ({
             {/* Min Label */}
             <text
               x={xMinObs}
-              y={centerY - 22}
+              y={centerY - 24}
               textAnchor="middle"
-              fontSize="10"
-              fontWeight="600"
+              fontSize="12"
+              fontWeight="800"
               fill="#0369a1"
             >
               x_min
@@ -405,8 +405,9 @@ export const BoxPlotChart: React.FC<BoxPlotChartProps> = ({
               x={xMinObs}
               y={centerY - 10}
               textAnchor="middle"
-              fontSize="9"
-              fill="#475569"
+              fontSize="11"
+              fontWeight="700"
+              fill="#0f172a"
               className="font-mono tabular-nums"
             >
               {formatNum(stats.isGrouped ? stats.min : stats.whiskerMin, digits)}
@@ -415,20 +416,21 @@ export const BoxPlotChart: React.FC<BoxPlotChartProps> = ({
             {/* Q1 Label */}
             <text
               x={xQ1}
-              y={centerY + boxHeight / 2 + 16}
+              y={centerY + boxHeight / 2 + 18}
               textAnchor="middle"
-              fontSize="10"
-              fontWeight="700"
+              fontSize="12"
+              fontWeight="800"
               fill="#0284c7"
             >
               Q₁
             </text>
             <text
               x={xQ1}
-              y={centerY + boxHeight / 2 + 28}
+              y={centerY + boxHeight / 2 + 32}
               textAnchor="middle"
-              fontSize="9"
-              fill="#475569"
+              fontSize="11"
+              fontWeight="700"
+              fill="#0f172a"
               className="font-mono tabular-nums"
             >
               {formatNum(stats.q1, digits)}
@@ -437,10 +439,10 @@ export const BoxPlotChart: React.FC<BoxPlotChartProps> = ({
             {/* Q2 / Median Label */}
             <text
               x={xQ2}
-              y={centerY - boxHeight / 2 - 16}
+              y={centerY - boxHeight / 2 - 18}
               textAnchor="middle"
-              fontSize="11"
-              fontWeight="800"
+              fontSize="13"
+              fontWeight="900"
               fill="#0f766e"
             >
               Q₂ (Trung vị)
@@ -449,8 +451,8 @@ export const BoxPlotChart: React.FC<BoxPlotChartProps> = ({
               x={xQ2}
               y={centerY - boxHeight / 2 - 4}
               textAnchor="middle"
-              fontSize="10"
-              fontWeight="600"
+              fontSize="12"
+              fontWeight="800"
               fill="#0f766e"
               className="font-mono tabular-nums"
             >
@@ -460,20 +462,21 @@ export const BoxPlotChart: React.FC<BoxPlotChartProps> = ({
             {/* Q3 Label */}
             <text
               x={xQ3}
-              y={centerY + boxHeight / 2 + 16}
+              y={centerY + boxHeight / 2 + 18}
               textAnchor="middle"
-              fontSize="10"
-              fontWeight="700"
+              fontSize="12"
+              fontWeight="800"
               fill="#0284c7"
             >
               Q₃
             </text>
             <text
               x={xQ3}
-              y={centerY + boxHeight / 2 + 28}
+              y={centerY + boxHeight / 2 + 32}
               textAnchor="middle"
-              fontSize="9"
-              fill="#475569"
+              fontSize="11"
+              fontWeight="700"
+              fill="#0f172a"
               className="font-mono tabular-nums"
             >
               {formatNum(stats.q3, digits)}
@@ -482,10 +485,10 @@ export const BoxPlotChart: React.FC<BoxPlotChartProps> = ({
             {/* Max Label */}
             <text
               x={xMaxObs}
-              y={centerY - 22}
+              y={centerY - 24}
               textAnchor="middle"
-              fontSize="10"
-              fontWeight="600"
+              fontSize="12"
+              fontWeight="800"
               fill="#0369a1"
             >
               x_max
@@ -494,8 +497,9 @@ export const BoxPlotChart: React.FC<BoxPlotChartProps> = ({
               x={xMaxObs}
               y={centerY - 10}
               textAnchor="middle"
-              fontSize="9"
-              fill="#475569"
+              fontSize="11"
+              fontWeight="700"
+              fill="#0f172a"
               className="font-mono tabular-nums"
             >
               {formatNum(stats.isGrouped ? stats.max : stats.whiskerMax, digits)}

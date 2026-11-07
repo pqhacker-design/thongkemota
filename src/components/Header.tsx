@@ -27,7 +27,7 @@ export const Header: React.FC<HeaderProps> = ({
               STATISTICS PRO
             </div>
             <div className="hidden sm:block text-[11px] text-slate-500 font-medium">
-              Công cụ tính toán thống kê mô tả
+              Công cụ tính toán thống kê mô tả & hồi quy tuyến tính
             </div>
           </div>
         </div>

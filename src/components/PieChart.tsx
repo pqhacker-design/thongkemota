@@ -409,11 +409,11 @@ export const PieChart: React.FC<PieChartProps> = ({
                       style={{ backgroundColor: slice.color }}
                     />
                     <div className="min-w-0">
-                      <div className="text-xs font-bold text-slate-800 truncate">
+                      <div className="text-sm font-bold text-slate-800 truncate">
                         {slice.label}
                       </div>
                       {slice.sublabel && (
-                        <div className="text-[11px] text-slate-400 truncate">
+                        <div className="text-xs text-slate-400 truncate">
                           {slice.sublabel}
                         </div>
                       )}
@@ -421,10 +421,10 @@ export const PieChart: React.FC<PieChartProps> = ({
                   </div>
 
                   <div className="text-right shrink-0 ml-3">
-                    <div className="font-mono font-bold text-xs text-slate-900 tabular-nums">
+                    <div className="font-mono font-extrabold text-sm sm:text-base text-slate-900 tabular-nums">
                       {slice.percentage.toFixed(2)}%
                     </div>
-                    <div className="text-[11px] font-mono text-slate-500">
+                    <div className="text-xs font-mono font-medium text-slate-500">
                       n = {slice.value}
                     </div>
                   </div>

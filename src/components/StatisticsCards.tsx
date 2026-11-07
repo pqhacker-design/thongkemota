@@ -78,18 +78,18 @@ export const StatisticsCards: React.FC<StatisticsCardsProps> = ({ stats, digits 
             className={`bg-white rounded-xl border ${c.border} p-3.5 shadow-xs hover:shadow-sm transition-all flex flex-col justify-between`}
           >
             <div className="flex items-center justify-between gap-1 mb-2">
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider truncate">
+              <span className="text-xs sm:text-sm font-bold text-slate-600 uppercase tracking-wider truncate">
                 {c.title}
               </span>
               <div className={`p-1.5 rounded-lg ${c.bg} ${c.color} shrink-0`}>
-                <Icon className="w-3.5 h-3.5" />
+                <Icon className="w-4 h-4" />
               </div>
             </div>
             <div>
-              <div className="text-lg md:text-xl font-bold font-mono text-slate-900 tabular-nums truncate">
+              <div className="text-xl sm:text-2xl font-black font-mono text-slate-900 tabular-nums truncate">
                 {c.value}
               </div>
-              <p className="text-[10px] text-slate-400 mt-0.5 truncate" title={c.subtext}>
+              <p className="text-[11px] sm:text-xs text-slate-500 mt-1 font-medium truncate" title={c.subtext}>
                 {c.subtext}
               </p>
             </div>

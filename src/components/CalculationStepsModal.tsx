@@ -68,10 +68,10 @@ export const CalculationStepsModal: React.FC<CalculationStepsModalProps> = ({
                 <p className="text-xs text-slate-600 mb-2">
                   Sắp xếp mẫu số liệu theo thứ tự không giảm để xác định phân vị và khoảng biến thiên:
                 </p>
-                <div className="bg-white p-3 rounded-lg border border-slate-200 font-mono text-xs text-slate-800 break-words leading-relaxed">
+                <div className="bg-white p-3 rounded-lg border border-slate-200 font-mono text-sm text-slate-800 break-words leading-relaxed">
                   {ungroupedSteps.sortedList.join(', ')}
                 </div>
-                <div className="mt-2 text-xs text-slate-600 flex items-center gap-2">
+                <div className="mt-2 text-xs sm:text-sm text-slate-600 flex items-center gap-2">
                   <span>Cỡ mẫu: <strong>n = {stats.n}</strong></span>
                   <span>·</span>
                   <span>x_min = <strong>{stats.min}</strong></span>
@@ -88,7 +88,7 @@ export const CalculationStepsModal: React.FC<CalculationStepsModalProps> = ({
                   <span className="w-6 h-6 rounded-full bg-sky-600 text-white text-xs flex items-center justify-center font-mono">2</span>
                   Tính số trung bình mẫu (x̄)
                 </h3>
-                <div className="bg-white p-3 rounded-lg border border-slate-200 font-mono text-xs space-y-1">
+                <div className="bg-white p-3.5 rounded-lg border border-slate-200 font-mono text-sm space-y-1">
                   <p className="text-sky-700 font-semibold">{ungroupedSteps.meanFormula}</p>
                   <p className="text-slate-800">{ungroupedSteps.meanCalculation}</p>
                 </div>
@@ -100,17 +100,17 @@ export const CalculationStepsModal: React.FC<CalculationStepsModalProps> = ({
                   <span className="w-6 h-6 rounded-full bg-sky-600 text-white text-xs flex items-center justify-center font-mono">3</span>
                   Xác định các tứ phân vị (Q₁, Q₂, Q₃) theo Phương pháp chia đôi mẫu
                 </h3>
-                <div className="space-y-3 text-xs">
+                <div className="space-y-3 text-xs sm:text-sm">
                   <div className="p-3 bg-teal-50 border border-teal-200 rounded-lg text-teal-900">
                     <p className="font-semibold mb-1">Quy ước bắt buộc (SGK Toán Việt Nam):</p>
                     <p>{ungroupedSteps.medianMethodExplanation}</p>
                   </div>
 
-                  <div className="bg-white p-3 rounded-lg border border-slate-200 space-y-2 font-mono">
-                    <p className="text-slate-900 font-semibold">
+                  <div className="bg-white p-3.5 rounded-lg border border-slate-200 space-y-2 font-mono text-sm">
+                    <p className="text-slate-900 font-bold">
                       • Trung vị Q₂: {ungroupedSteps.medianCalculation}
                     </p>
-                    <div className="pl-3 border-l-2 border-slate-200 space-y-1 text-slate-700">
+                    <div className="pl-3 border-l-2 border-slate-200 space-y-1 text-slate-700 text-xs sm:text-sm">
                       <p>Nửa dưới: [{ungroupedSteps.lowerHalf.join(', ')}]</p>
                       <p>Nửa trên: [{ungroupedSteps.upperHalf.join(', ')}]</p>
                     </div>

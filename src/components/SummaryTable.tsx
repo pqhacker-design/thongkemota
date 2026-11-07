@@ -215,37 +215,37 @@ export const SummaryTable: React.FC<SummaryTableProps> = ({
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm border-collapse">
           <thead>
-            <tr className="bg-slate-100/80 text-slate-600 text-xs font-semibold uppercase tracking-wider border-b border-slate-200">
-              <th className="py-3 px-4 w-14 text-center">STT</th>
-              <th className="py-3 px-4">Đại lượng thống kê</th>
-              <th className="py-3 px-4 w-28 text-center font-mono">Ký hiệu</th>
-              <th className="py-3 px-4 text-right">Kết quả</th>
-              <th className="py-3 px-4 hidden md:table-cell text-slate-500 font-normal">Ý nghĩa & Công thức</th>
+            <tr className="bg-slate-100/90 text-slate-700 text-xs sm:text-sm font-bold uppercase tracking-wider border-b border-slate-200">
+              <th className="py-3.5 px-4 w-14 text-center">STT</th>
+              <th className="py-3.5 px-4">Đại lượng thống kê</th>
+              <th className="py-3.5 px-4 w-36 text-center font-mono">Ký hiệu</th>
+              <th className="py-3.5 px-4 text-right">Kết quả</th>
+              <th className="py-3.5 px-4 hidden lg:table-cell text-slate-500 font-normal">Ý nghĩa & Công thức</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {rows.map((row) => (
               <tr
                 key={row.stt}
-                className={`transition-colors hover:bg-sky-50/40 ${
-                  row.highlight ? 'bg-sky-50/20 font-medium' : ''
+                className={`transition-colors hover:bg-sky-50/50 ${
+                  row.highlight ? 'bg-sky-50/25' : ''
                 }`}
               >
-                <td className="py-2.5 px-4 text-center text-xs text-slate-400 font-mono">
+                <td className="py-3 px-4 text-center text-xs sm:text-sm text-slate-400 font-mono font-medium">
                   {row.stt}
                 </td>
-                <td className="py-2.5 px-4 font-medium text-slate-800">
+                <td className="py-3 px-4 text-sm sm:text-base font-semibold text-slate-800">
                   {row.name}
                 </td>
-                <td className="py-2.5 px-4 text-center">
-                  <span className="font-mono text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold border border-slate-200">
+                <td className="py-3 px-4 text-center">
+                  <span className="font-mono text-base sm:text-lg px-3 py-1 rounded-md bg-slate-100/90 text-sky-900 font-bold border border-slate-200 shadow-2xs inline-block">
                     {row.symbol}
                   </span>
                 </td>
-                <td className="py-2.5 px-4 text-right font-mono font-bold text-slate-900 tabular-nums">
+                <td className="py-3 px-4 text-right font-mono font-extrabold text-lg sm:text-xl text-slate-900 tabular-nums">
                   {row.value}
                 </td>
-                <td className="py-2.5 px-4 hidden md:table-cell text-xs text-slate-500">
+                <td className="py-3 px-4 hidden lg:table-cell text-xs sm:text-sm text-slate-500">
                   {row.description}
                 </td>
               </tr>

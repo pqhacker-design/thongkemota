@@ -143,6 +143,20 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({ isOpen, onClose 
               <p>• Hỗ trợ chuyển đổi linh hoạt giữa dạng quạt tròn (Pie) và vành khăn (Donut), kèm tải ảnh PNG.</p>
             </div>
           </div>
+
+          {/* Section 7: Hồi quy tuyến tính & Tương quan */}
+          <div>
+            <h3 className="text-base font-bold text-slate-900 mb-2 flex items-center gap-2">
+              <span className="w-5 h-5 rounded-full bg-sky-100 text-sky-700 text-xs flex items-center justify-center font-bold">7</span>
+              Hồi quy tuyến tính & Phân tích tương quan
+            </h3>
+            <div className="p-3.5 bg-teal-50 border border-teal-200 rounded-lg text-xs text-teal-950 space-y-1.5">
+              <p>• <strong>Hồi quy tuyến tính đơn:</strong> Mô hình hóa quan hệ giữa 1 biến X và biến Y bằng phương trình <code>y = a + bX</code>; tính hệ số tương quan Pearson <code>r</code>, hệ số xác định <code>R²</code>, sai số chuẩn <code>SER</code> và vẽ biểu đồ phân tán kèm đường hồi quy OLS.</p>
+              <p>• <strong>Hồi quy tuyến tính bội:</strong> Mô hình hóa từ 2 đến 10 biến độc lập <code>X₁, X₂, ... Xₖ</code> tác động lên <code>Y</code> bằng đại số ma trận OLS <code>β̂ = (XᵀX)⁻¹XᵀY</code>; tính <code>R²</code> hiệu chỉnh (R²_adj), ma trận tương quan Heatmap, kiểm tra đa cộng tuyến và vẽ biểu đồ chẩn đoán độ khớp.</p>
+              <p>• <strong>Nguyên lý Ceteris Paribus:</strong> Mỗi hệ số hồi quy riêng phần <code>bⱼ</code> cho biết khi <code>Xⱼ</code> tăng 1 đơn vị thì <code>Y</code> thay đổi trung bình <code>bⱼ</code> đơn vị khi tất cả các biến độc lập khác giữ nguyên không đổi.</p>
+              <p>• <strong>Cảnh báo quan trọng:</strong> Tương quan không khẳng định quan hệ nhân quả (Correlation ≠ Causation); cảnh báo ngoại suy khi dự báo ngoài phạm vi giá trị quan sát của mẫu.</p>
+            </div>
+          </div>
         </div>
 
         {/* Footer */}

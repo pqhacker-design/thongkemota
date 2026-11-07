@@ -49,27 +49,27 @@ export const OutlierReport: React.FC<OutlierReportProps> = ({ stats, digits = 4 
       {/* Threshold Formula Details */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div className="bg-slate-50 rounded-lg p-3.5 border border-slate-200/80">
-          <div className="flex items-center justify-between text-xs text-slate-600 mb-1">
-            <span className="font-semibold text-slate-700">Ngưỡng dưới (Lower Fence - LF)</span>
-            <span className="font-mono text-slate-500">Q1 - 1.5 × IQR</span>
+          <div className="flex items-center justify-between text-xs sm:text-sm text-slate-600 mb-1">
+            <span className="font-bold text-slate-800">Ngưỡng dưới (Lower Fence - LF)</span>
+            <span className="font-mono text-slate-500 font-medium">Q₁ - 1.5 × ΔQ</span>
           </div>
-          <div className="text-xl font-bold font-mono text-slate-900 tabular-nums">
+          <div className="text-2xl sm:text-3xl font-black font-mono text-slate-900 tabular-nums">
             {formatNum(lowerFence, digits)}
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Mọi giá trị x &lt; {formatNum(lowerFence, digits)} là ngoại lệ phía dưới
           </p>
         </div>
 
         <div className="bg-slate-50 rounded-lg p-3.5 border border-slate-200/80">
-          <div className="flex items-center justify-between text-xs text-slate-600 mb-1">
-            <span className="font-semibold text-slate-700">Ngưỡng trên (Upper Fence - UF)</span>
-            <span className="font-mono text-slate-500">Q3 + 1.5 × IQR</span>
+          <div className="flex items-center justify-between text-xs sm:text-sm text-slate-600 mb-1">
+            <span className="font-bold text-slate-800">Ngưỡng trên (Upper Fence - UF)</span>
+            <span className="font-mono text-slate-500 font-medium">Q₃ + 1.5 × ΔQ</span>
           </div>
-          <div className="text-xl font-bold font-mono text-slate-900 tabular-nums">
+          <div className="text-2xl sm:text-3xl font-black font-mono text-slate-900 tabular-nums">
             {formatNum(upperFence, digits)}
           </div>
-          <p className="text-[11px] text-slate-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Mọi giá trị x &gt; {formatNum(upperFence, digits)} là ngoại lệ phía trên
           </p>
         </div>
@@ -82,16 +82,16 @@ export const OutlierReport: React.FC<OutlierReportProps> = ({ stats, digits = 4 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Lower Outliers */}
               <div className="border border-rose-100 bg-rose-50/40 rounded-lg p-3.5">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-rose-800 mb-1.5">
+                <div className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-rose-800 mb-1.5">
                   <ArrowDownCircle className="w-4 h-4 text-rose-600" />
                   <span>Ngoại lệ phía dưới (x &lt; LF)</span>
                 </div>
                 {lowerOutliers.length > 0 ? (
-                  <div className="flex flex-wrap gap-1.5 mt-2">
+                  <div className="flex flex-wrap gap-2 mt-2">
                     {lowerOutliers.map((val, idx) => (
                       <span
                         key={idx}
-                        className="px-2.5 py-1 bg-white border border-rose-200 text-rose-700 font-mono font-bold text-xs rounded shadow-2xs"
+                        className="px-3 py-1.5 bg-white border border-rose-200 text-rose-700 font-mono font-extrabold text-sm rounded-md shadow-2xs"
                       >
                         {formatNum(val, digits)}
                       </span>
@@ -104,16 +104,16 @@ export const OutlierReport: React.FC<OutlierReportProps> = ({ stats, digits = 4 
 
               {/* Upper Outliers */}
               <div className="border border-rose-100 bg-rose-50/40 rounded-lg p-3.5">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-rose-800 mb-1.5">
+                <div className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-rose-800 mb-1.5">
                   <ArrowUpCircle className="w-4 h-4 text-rose-600" />
                   <span>Ngoại lệ phía trên (x &gt; UF)</span>
                 </div>
                 {upperOutliers.length > 0 ? (
-                  <div className="flex flex-wrap gap-1.5 mt-2">
+                  <div className="flex flex-wrap gap-2 mt-2">
                     {upperOutliers.map((val, idx) => (
                       <span
                         key={idx}
-                        className="px-2.5 py-1 bg-white border border-rose-200 text-rose-700 font-mono font-bold text-xs rounded shadow-2xs"
+                        className="px-3 py-1.5 bg-white border border-rose-200 text-rose-700 font-mono font-extrabold text-sm rounded-md shadow-2xs"
                       >
                         {formatNum(val, digits)}
                       </span>

@@ -11,6 +11,8 @@ import { ExportBar } from './components/ExportBar';
 import { UserGuideModal } from './components/UserGuideModal';
 import { CalculationStepsModal } from './components/CalculationStepsModal';
 import { PrintableReport } from './components/PrintableReport';
+import { SimpleRegressionView } from './components/regression/SimpleRegressionView';
+import { MultipleRegressionView } from './components/regression/MultipleRegressionView';
 import { DataType, GroupInterval } from './types/statistics';
 import {
   calculateGroupedStatistics,
@@ -19,11 +21,28 @@ import {
   validateGroupedIntervals,
 } from './utils/mathStatistics';
 import { downloadSvgAsPng } from './utils/exportUtils';
-import { FileSpreadsheet, ListFilter, AlertCircle, Info } from 'lucide-react';
+import {
+  FileSpreadsheet,
+  ListFilter,
+  AlertCircle,
+  BarChart3,
+  TrendingUp,
+  Activity,
+  Layers,
+} from 'lucide-react';
+
+type MainModule = 'descriptive' | 'regression';
+type RegressionSubTab = 'simple' | 'multiple';
 
 export default function App() {
-  // Navigation Tab
+  // Top-Level Main Module Selector: Thống kê mô tả (default) | Hồi quy & Tương quan
+  const [mainModule, setMainModule] = useState<MainModule>('descriptive');
+
+  // Descriptive Statistics Navigation Tab
   const [activeTab, setActiveTab] = useState<DataType>('ungrouped');
+
+  // Regression Sub-Method: Hồi quy đơn | Hồi quy bội
+  const [regressionTab, setRegressionTab] = useState<RegressionSubTab>('simple');
 
   // Decimal Precision Display setting (default 4 digits as required)
   const [digits, setDigits] = useState<number>(4);
@@ -65,7 +84,7 @@ export default function App() {
     return calculateGroupedStatistics(groupRows, digits);
   }, [groupRows, groupedValidation.isValid, digits]);
 
-  // Current Active Statistics
+  // Current Active Descriptive Statistics
   const currentStats = activeTab === 'ungrouped' ? ungroupedResult?.stats : groupedResult?.stats;
   const currentUngroupedSteps = ungroupedResult?.steps;
   const currentGroupedSteps = groupedResult?.steps;
@@ -95,117 +114,210 @@ export default function App() {
 
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* Data Type Tab Switcher */}
-        <div className="no-print bg-white p-1.5 rounded-xl border border-slate-200 shadow-2xs flex items-center justify-between gap-3">
-          <div className="flex items-center gap-1.5 w-full sm:w-auto">
+        {/* Primary Module Selector (Top Navigation) */}
+        <div className="no-print bg-white p-2 rounded-2xl border border-slate-200/90 shadow-xs flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
-              onClick={() => setActiveTab('ungrouped')}
-              className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all cursor-pointer ${
-                activeTab === 'ungrouped'
-                  ? 'bg-sky-600 text-white shadow-xs'
+              onClick={() => setMainModule('descriptive')}
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 text-xs sm:text-sm font-bold rounded-xl transition-all cursor-pointer ${
+                mainModule === 'descriptive'
+                  ? 'bg-gradient-to-r from-sky-600 to-blue-600 text-white shadow-sm'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
-              <ListFilter className="w-4 h-4" />
-              <span>Dữ liệu thường (Dữ liệu thô)</span>
+              <BarChart3 className="w-4 h-4" />
+              <span>THỐNG KÊ MÔ TẢ</span>
             </button>
 
             <button
-              onClick={() => setActiveTab('grouped')}
-              className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all cursor-pointer ${
-                activeTab === 'grouped'
-                  ? 'bg-sky-600 text-white shadow-xs'
+              onClick={() => setMainModule('regression')}
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 text-xs sm:text-sm font-bold rounded-xl transition-all cursor-pointer ${
+                mainModule === 'regression'
+                  ? 'bg-gradient-to-r from-teal-600 to-emerald-600 text-white shadow-sm'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
-              <FileSpreadsheet className="w-4 h-4" />
-              <span>Dữ liệu ghép nhóm (Bảng tần số)</span>
+              <TrendingUp className="w-4 h-4" />
+              <span>HỒI QUY & TƯƠNG QUAN</span>
             </button>
           </div>
 
           <div className="hidden lg:flex items-center gap-2 text-xs text-slate-500 pr-2">
-            <span>Phương pháp: <strong>Chia đôi mẫu</strong> (Dữ liệu thường) · <strong>Nội suy tuyến tính</strong> (Ghép nhóm)</span>
+            {mainModule === 'descriptive' ? (
+              <span>Mô tả mức độ tập trung, mức độ phân tán & giá trị ngoại lai</span>
+            ) : (
+              <span>Phân tích hồi quy OLS, hệ số Pearson, tương quan bội & dự báo</span>
+            )}
           </div>
         </div>
 
-        {/* Input Area */}
-        <section className="no-print">
-          {activeTab === 'ungrouped' ? (
-            <UngroupedInput
-              rawInput={rawText}
-              onChangeInput={setRawText}
-              parsedNumbers={parsedNumbers}
-              sortedNumbers={ungroupedResult ? ungroupedResult.steps.sortedList : []}
-              invalidTokens={invalidTokens}
-            />
-          ) : (
-            <GroupedInput
-              groups={groupRows}
-              onChangeGroups={setGroupRows}
-              validationErrors={groupedValidation.errors}
-            />
-          )}
-        </section>
+        {/* MODULE 1: THỐNG KÊ MÔ TẢ */}
+        {mainModule === 'descriptive' && (
+          <div className="space-y-6">
+            {/* Sub-Tabs: Ungrouped vs Grouped */}
+            <div className="no-print bg-white p-1.5 rounded-xl border border-slate-200 shadow-2xs flex items-center justify-between gap-3">
+              <div className="flex items-center gap-1.5 w-full sm:w-auto">
+                <button
+                  onClick={() => setActiveTab('ungrouped')}
+                  className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all cursor-pointer ${
+                    activeTab === 'ungrouped'
+                      ? 'bg-sky-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <ListFilter className="w-4 h-4" />
+                  <span>Dữ liệu thường (Dữ liệu thô)</span>
+                </button>
 
-        {/* Results Area */}
-        {currentStats ? (
-          <section className="space-y-6">
-            {/* 1. Statistics Cards */}
-            <StatisticsCards stats={currentStats} digits={digits} />
+                <button
+                  onClick={() => setActiveTab('grouped')}
+                  className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all cursor-pointer ${
+                    activeTab === 'grouped'
+                      ? 'bg-sky-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                  <span>Dữ liệu ghép nhóm (Bảng tần số)</span>
+                </button>
+              </div>
 
-            {/* 2. Box Plot Chart */}
-            <BoxPlotChart
-              stats={currentStats}
-              digits={digits}
-              rawNumbers={activeTab === 'ungrouped' ? parsedNumbers : undefined}
-            />
-
-            {/* 3. Pie Chart (Biểu đồ phần trăm) */}
-            <PieChart
-              stats={currentStats}
-              dataType={activeTab}
-              groups={groupRows}
-              rawNumbers={parsedNumbers}
-              digits={digits}
-            />
-
-            {/* 4. Detailed Summary Table (15 rows) */}
-            <SummaryTable
-              stats={currentStats}
-              digits={digits}
-              onOpenSteps={() => setIsStepsOpen(true)}
-              rawSource={activeTab === 'ungrouped' ? parsedNumbers : groupRows}
-              dataType={activeTab}
-            />
-
-            {/* 4. Outlier Analysis & Conclusion */}
-            <OutlierReport stats={currentStats} digits={digits} />
-
-            {/* 5. Export and Action Bar */}
-            <ExportBar
-              stats={currentStats}
-              dataType={activeTab}
-              rawSource={activeTab === 'ungrouped' ? parsedNumbers : groupRows}
-              digits={digits}
-              onOpenSteps={() => setIsStepsOpen(true)}
-              onPrint={handlePrint}
-              onDownloadBoxPlot={handleDownloadBoxPlot}
-            />
-          </section>
-        ) : (
-          /* Empty or Invalid State */
-          <div className="bg-white rounded-xl border border-dashed border-slate-300 p-12 text-center text-slate-500 space-y-3">
-            <div className="w-12 h-12 mx-auto rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-              <AlertCircle className="w-6 h-6" />
+              <div className="hidden lg:flex items-center gap-2 text-xs text-slate-500 pr-2">
+                <span>
+                  Phương pháp: <strong>Chia đôi mẫu</strong> (Dữ liệu thường) · <strong>Nội suy tuyến tính</strong> (Ghép nhóm)
+                </span>
+              </div>
             </div>
-            <h3 className="text-base font-semibold text-slate-700">Chưa có kết quả thống kê</h3>
-            <p className="text-xs text-slate-400 max-w-md mx-auto">
-              {activeTab === 'ungrouped'
-                ? 'Vui lòng nhập hoặc chọn một bộ dữ liệu mẫu ở trên để bắt đầu tính toán.'
-                : groupedValidation.errors.length > 0
-                ? groupedValidation.errors[0]
-                : 'Vui lòng hoàn thiện bảng phân bố tần số hợp lệ ở trên để bắt đầu tính toán.'}
-            </p>
+
+            {/* Input Area */}
+            <section className="no-print">
+              {activeTab === 'ungrouped' ? (
+                <UngroupedInput
+                  rawInput={rawText}
+                  onChangeInput={setRawText}
+                  parsedNumbers={parsedNumbers}
+                  sortedNumbers={ungroupedResult ? ungroupedResult.steps.sortedList : []}
+                  invalidTokens={invalidTokens}
+                />
+              ) : (
+                <GroupedInput
+                  groups={groupRows}
+                  onChangeGroups={setGroupRows}
+                  validationErrors={groupedValidation.errors}
+                />
+              )}
+            </section>
+
+            {/* Results Area */}
+            {currentStats ? (
+              <section className="space-y-6">
+                {/* 1. Statistics Cards */}
+                <StatisticsCards stats={currentStats} digits={digits} />
+
+                {/* 2. Box Plot Chart */}
+                <BoxPlotChart
+                  stats={currentStats}
+                  digits={digits}
+                  rawNumbers={activeTab === 'ungrouped' ? parsedNumbers : undefined}
+                />
+
+                {/* 3. Pie Chart (Biểu đồ phần trăm) */}
+                <PieChart
+                  stats={currentStats}
+                  dataType={activeTab}
+                  groups={groupRows}
+                  rawNumbers={parsedNumbers}
+                  digits={digits}
+                />
+
+                {/* 4. Detailed Summary Table (15 rows) */}
+                <SummaryTable
+                  stats={currentStats}
+                  digits={digits}
+                  onOpenSteps={() => setIsStepsOpen(true)}
+                  rawSource={activeTab === 'ungrouped' ? parsedNumbers : groupRows}
+                  dataType={activeTab}
+                />
+
+                {/* 5. Outlier Analysis & Conclusion */}
+                <OutlierReport stats={currentStats} digits={digits} />
+
+                {/* 6. Export and Action Bar */}
+                <ExportBar
+                  stats={currentStats}
+                  dataType={activeTab}
+                  rawSource={activeTab === 'ungrouped' ? parsedNumbers : groupRows}
+                  digits={digits}
+                  onOpenSteps={() => setIsStepsOpen(true)}
+                  onPrint={handlePrint}
+                  onDownloadBoxPlot={handleDownloadBoxPlot}
+                />
+              </section>
+            ) : (
+              /* Empty or Invalid State */
+              <div className="bg-white rounded-xl border border-dashed border-slate-300 p-12 text-center text-slate-500 space-y-3">
+                <div className="w-12 h-12 mx-auto rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                  <AlertCircle className="w-6 h-6" />
+                </div>
+                <h3 className="text-base font-semibold text-slate-700">Chưa có kết quả thống kê</h3>
+                <p className="text-xs text-slate-400 max-w-md mx-auto">
+                  {activeTab === 'ungrouped'
+                    ? 'Vui lòng nhập hoặc chọn một bộ dữ liệu mẫu ở trên để bắt đầu tính toán.'
+                    : groupedValidation.errors.length > 0
+                    ? groupedValidation.errors[0]
+                    : 'Vui lòng hoàn thiện bảng phân bố tần số hợp lệ ở trên để bắt đầu tính toán.'}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* MODULE 2: HỒI QUY & TƯƠNG QUAN */}
+        {mainModule === 'regression' && (
+          <div className="space-y-6">
+            {/* Sub-Tabs: Simple vs Multiple */}
+            <div className="no-print bg-white p-1.5 rounded-xl border border-slate-200 shadow-2xs flex items-center justify-between gap-3">
+              <div className="flex items-center gap-1.5 w-full sm:w-auto">
+                <button
+                  onClick={() => setRegressionTab('simple')}
+                  className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all cursor-pointer ${
+                    regressionTab === 'simple'
+                      ? 'bg-teal-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <Activity className="w-4 h-4" />
+                  <span>1. Hồi quy tuyến tính đơn (Simple OLS)</span>
+                </button>
+
+                <button
+                  onClick={() => setRegressionTab('multiple')}
+                  className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all cursor-pointer ${
+                    regressionTab === 'multiple'
+                      ? 'bg-teal-600 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  }`}
+                >
+                  <Layers className="w-4 h-4" />
+                  <span>2. Hồi quy tuyến tính bội (Multiple OLS)</span>
+                </button>
+              </div>
+
+              <div className="hidden lg:flex items-center gap-2 text-xs text-slate-500 pr-2">
+                <span>
+                  {regressionTab === 'simple'
+                    ? '1 biến giải thích X · Phương trình y = a + bX · Hệ số Pearson r'
+                    : '2 đến 10 biến giải thích · Ma trận OLS β̂ = (XᵀX)⁻¹XᵀY · R² hiệu chỉnh'}
+                </span>
+              </div>
+            </div>
+
+            {/* Regression Views */}
+            {regressionTab === 'simple' ? (
+              <SimpleRegressionView digits={digits} />
+            ) : (
+              <MultipleRegressionView digits={digits} />
+            )}
           </div>
         )}
       </main>
@@ -214,7 +326,7 @@ export default function App() {
       <footer className="no-print bg-white border-t border-slate-200 py-6 mt-12 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <div>
-            <strong>STATISTICS PRO</strong> · Công cụ tính toán thống kê mô tả
+            <strong>STATISTICS PRO</strong> · Công cụ tính toán thống kê mô tả & hồi quy tuyến tính
           </div>
           <div className="text-slate-400 text-[11px]">
             Ngô Thanh Hùng - Lớp ĐHSTOAN26A_L2 môn Thống kê nâng cao (GV: Lê Trung Hiếu)
