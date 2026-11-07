@@ -1,0 +1,6 @@
+{
+  "name": "Statistics Pro – Thống Kê Mô Tả",
+  "description": "Công cụ tính toán thống kê mô tả chuyên sâu, chính xác và trực quan cho mẫu số liệu không ghép nhóm và ghép nhóm, kèm biểu đồ hộp Box Plot.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
