@@ -1,5 +1,5 @@
-import React from 'react';
-import { Plus, Trash2, Sparkles, Table2, AlertCircle, ArrowRight } from 'lucide-react';
+import React, { useRef, useEffect } from 'react';
+import { Plus, Trash2, Sparkles, Table2, AlertCircle, ArrowRight, CornerDownLeft } from 'lucide-react';
 import { GroupInterval } from '../types/statistics';
 
 interface GroupedInputProps {
@@ -49,13 +49,35 @@ export const GroupedInput: React.FC<GroupedInputProps> = ({
     },
   ];
 
+  // Refs for keyboard navigation between rows and fields
+  const lowerRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const upperRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const freqRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const pendingFocusRef = useRef<{ index: number; field: 'lower' | 'upper' | 'frequency' } | null>(null);
+
+  useEffect(() => {
+    if (pendingFocusRef.current !== null) {
+      const { index, field } = pendingFocusRef.current;
+      pendingFocusRef.current = null;
+      let target: HTMLInputElement | null = null;
+      if (field === 'lower') target = lowerRefs.current[index];
+      else if (field === 'upper') target = upperRefs.current[index];
+      else target = freqRefs.current[index];
+
+      if (target) {
+        target.focus();
+        target.select();
+      }
+    }
+  }, [groups]);
+
   const handleRowChange = (index: number, field: keyof GroupInterval, value: number) => {
     const updated = [...groups];
     updated[index] = { ...updated[index], [field]: value };
     onChangeGroups(updated);
   };
 
-  const handleAddRow = () => {
+  const handleAddRow = (focusField: 'lower' | 'upper' | 'frequency' = 'frequency') => {
     let nextLower = 0;
     let nextUpper = 10;
     if (groups.length > 0) {
@@ -65,6 +87,8 @@ export const GroupedInput: React.FC<GroupedInputProps> = ({
       nextUpper = nextLower + step;
     }
 
+    pendingFocusRef.current = { index: groups.length, field: focusField };
+
     const newRow: GroupInterval = {
       id: Date.now().toString(),
       lower: nextLower,
@@ -72,6 +96,56 @@ export const GroupedInput: React.FC<GroupedInputProps> = ({
       frequency: 1,
     };
     onChangeGroups([...groups, newRow]);
+  };
+
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    idx: number,
+    field: 'lower' | 'upper' | 'frequency'
+  ) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (field === 'lower') {
+        upperRefs.current[idx]?.focus();
+        upperRefs.current[idx]?.select();
+      } else if (field === 'upper') {
+        freqRefs.current[idx]?.focus();
+        freqRefs.current[idx]?.select();
+      } else if (field === 'frequency') {
+        if (idx < groups.length - 1) {
+          // Move down to the next row's frequency input
+          freqRefs.current[idx + 1]?.focus();
+          freqRefs.current[idx + 1]?.select();
+        } else {
+          // At the last row: automatically add a new row and focus its frequency
+          handleAddRow('frequency');
+        }
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (idx < groups.length - 1) {
+        const target =
+          field === 'lower'
+            ? lowerRefs.current[idx + 1]
+            : field === 'upper'
+            ? upperRefs.current[idx + 1]
+            : freqRefs.current[idx + 1];
+        target?.focus();
+        target?.select();
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (idx > 0) {
+        const target =
+          field === 'lower'
+            ? lowerRefs.current[idx - 1]
+            : field === 'upper'
+            ? upperRefs.current[idx - 1]
+            : freqRefs.current[idx - 1];
+        target?.focus();
+        target?.select();
+      }
+    }
   };
 
   const handleRemoveRow = (index: number) => {
@@ -156,21 +230,33 @@ export const GroupedInput: React.FC<GroupedInputProps> = ({
                   </td>
                   <td className="py-2 px-3">
                     <input
+                      ref={(el) => {
+                        lowerRefs.current[idx] = el;
+                      }}
                       type="number"
                       step="any"
                       value={group.lower}
                       onChange={(e) => handleRowChange(idx, 'lower', parseFloat(e.target.value) || 0)}
-                      className="w-full max-w-[120px] font-mono text-sm px-2.5 py-1.5 border border-slate-300 rounded focus:bg-white focus:outline-none focus:ring-1 focus:ring-sky-500"
+                      onKeyDown={(e) => handleKeyDown(e, idx, 'lower')}
+                      onFocus={(e) => e.target.select()}
+                      onWheel={(e) => e.currentTarget.blur()}
+                      className="w-full max-w-[120px] font-mono text-sm px-2.5 py-1.5 border border-slate-300 rounded focus:bg-white focus:outline-none focus:ring-1 focus:ring-sky-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                   </td>
                   <td className="py-2 px-2 text-center text-slate-400 font-bold">;</td>
                   <td className="py-2 px-3">
                     <input
+                      ref={(el) => {
+                        upperRefs.current[idx] = el;
+                      }}
                       type="number"
                       step="any"
                       value={group.upper}
                       onChange={(e) => handleRowChange(idx, 'upper', parseFloat(e.target.value) || 0)}
-                      className="w-full max-w-[120px] font-mono text-sm px-2.5 py-1.5 border border-slate-300 rounded focus:bg-white focus:outline-none focus:ring-1 focus:ring-sky-500"
+                      onKeyDown={(e) => handleKeyDown(e, idx, 'upper')}
+                      onFocus={(e) => e.target.select()}
+                      onWheel={(e) => e.currentTarget.blur()}
+                      className="w-full max-w-[120px] font-mono text-sm px-2.5 py-1.5 border border-slate-300 rounded focus:bg-white focus:outline-none focus:ring-1 focus:ring-sky-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                   </td>
                   <td className="py-2 px-3 text-center bg-slate-50/70 font-mono font-medium text-slate-700 text-xs">
@@ -178,6 +264,9 @@ export const GroupedInput: React.FC<GroupedInputProps> = ({
                   </td>
                   <td className="py-2 px-3">
                     <input
+                      ref={(el) => {
+                        freqRefs.current[idx] = el;
+                      }}
                       type="number"
                       min="0"
                       step="1"
@@ -185,7 +274,10 @@ export const GroupedInput: React.FC<GroupedInputProps> = ({
                       onChange={(e) =>
                         handleRowChange(idx, 'frequency', Math.max(0, parseInt(e.target.value, 10) || 0))
                       }
-                      className="w-full max-w-[100px] font-mono text-sm px-2.5 py-1.5 border border-slate-300 rounded focus:bg-white focus:outline-none focus:ring-1 focus:ring-sky-500"
+                      onKeyDown={(e) => handleKeyDown(e, idx, 'frequency')}
+                      onFocus={(e) => e.target.select()}
+                      onWheel={(e) => e.currentTarget.blur()}
+                      className="w-full max-w-[100px] font-mono text-sm px-2.5 py-1.5 border border-slate-300 rounded focus:bg-white focus:outline-none focus:ring-1 focus:ring-sky-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                   </td>
                   <td className="py-2 px-2 text-center">
@@ -219,13 +311,19 @@ export const GroupedInput: React.FC<GroupedInputProps> = ({
 
       {/* Add Row Button & Error Alerts */}
       <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-        <button
-          onClick={handleAddRow}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-sky-700 bg-sky-50 hover:bg-sky-100 border border-sky-200 rounded-lg transition-colors cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Thêm khoảng nhóm mới</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => handleAddRow('frequency')}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-sky-700 bg-sky-50 hover:bg-sky-100 border border-sky-200 rounded-lg transition-colors cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Thêm khoảng nhóm mới</span>
+          </button>
+          <div className="text-[11px] text-slate-500 italic hidden sm:flex items-center gap-1.5">
+            <CornerDownLeft className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+            <span>Nhấn <strong>Enter</strong> trong ô Tần số để xuống dòng tiếp theo</span>
+          </div>
+        </div>
 
         {validationErrors.length > 0 && (
           <div className="flex items-center gap-1.5 text-xs text-rose-700 bg-rose-50 border border-rose-200 px-3 py-1.5 rounded-lg max-w-xl">

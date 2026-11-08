@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   Plus,
   Trash2,
@@ -14,6 +14,7 @@ import {
   Table as TableIcon,
   HelpCircle,
   TrendingUp,
+  CornerDownLeft,
 } from 'lucide-react';
 import { SimpleDataPoint } from '../../types/regression';
 import { calculateSimpleLinearRegression, parseSimpleRegressionInput } from '../../utils/regressionMath';
@@ -109,11 +110,68 @@ export const SimpleRegressionView: React.FC<SimpleRegressionViewProps> = ({ digi
     });
   };
 
-  const handleAddRow = () => {
+  // Refs for keyboard navigation between rows
+  const xInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const yInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const pendingFocusRef = useRef<{ index: number; field: 'x' | 'y' } | null>(null);
+
+  useEffect(() => {
+    if (pendingFocusRef.current !== null) {
+      const { index, field } = pendingFocusRef.current;
+      pendingFocusRef.current = null;
+      const target = field === 'x' ? xInputRefs.current[index] : yInputRefs.current[index];
+      if (target) {
+        target.focus();
+        target.select();
+      }
+    }
+  }, [points]);
+
+  const handleAddRow = (focusField: 'x' | 'y' = 'x') => {
+    pendingFocusRef.current = { index: points.length, field: focusField };
     setPoints((prev) => [
       ...prev,
       { id: Date.now().toString(), x: 0, y: 0 },
     ]);
+  };
+
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    idx: number,
+    field: 'x' | 'y'
+  ) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (field === 'x') {
+        if (idx < points.length - 1) {
+          xInputRefs.current[idx + 1]?.focus();
+          xInputRefs.current[idx + 1]?.select();
+        } else {
+          handleAddRow('x');
+        }
+      } else if (field === 'y') {
+        if (idx < points.length - 1) {
+          yInputRefs.current[idx + 1]?.focus();
+          yInputRefs.current[idx + 1]?.select();
+        } else {
+          handleAddRow('y');
+        }
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (idx < points.length - 1) {
+        const target = field === 'x' ? xInputRefs.current[idx + 1] : yInputRefs.current[idx + 1];
+        target?.focus();
+        target?.select();
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (idx > 0) {
+        const target = field === 'x' ? xInputRefs.current[idx - 1] : yInputRefs.current[idx - 1];
+        target?.focus();
+        target?.select();
+      }
+    }
   };
 
   const handleDeleteRow = (idx: number) => {
@@ -166,9 +224,11 @@ export const SimpleRegressionView: React.FC<SimpleRegressionViewProps> = ({ digi
   // Copy Residual Table
   const handleCopyTable = () => {
     if (!result) return;
-    let tsv = 'STT\tX\tY\tY_du_doan\te\te^2\n';
+    const meanY = result.meanY;
+    let tsv = 'STT\tX\tY\tY_du_doan\te\te^2\t(Y-Y_tb)^2\n';
     result.rows.forEach((r) => {
-      tsv += `${r.index}\t${r.x}\t${r.y}\t${formatNum(r.yPred, digits)}\t${formatNum(r.residual, digits)}\t${formatNum(r.residualSquared, digits)}\n`;
+      const devY2 = (r.y - meanY) * (r.y - meanY);
+      tsv += `${r.index}\t${r.x}\t${r.y}\t${formatNum(r.yPred, digits)}\t${formatNum(r.residual, digits)}\t${formatNum(r.residualSquared, digits)}\t${formatNum(devY2, digits)}\n`;
     });
     navigator.clipboard.writeText(tsv);
     setCopiedTable(true);
@@ -178,9 +238,11 @@ export const SimpleRegressionView: React.FC<SimpleRegressionViewProps> = ({ digi
   // Export CSV
   const handleExportCSV = () => {
     if (!result) return;
-    let csv = '\uFEFFSTT,X,Y,Y_Dự_đoán,Phần_dư_e,e_bình_phương\n';
+    const meanY = result.meanY;
+    let csv = '\uFEFFSTT,X,Y,Y_Dự_đoán,Phần_dư_e,e_bình_phương,Do_lech_binh_phuong_(Y-Ytb)^2\n';
     result.rows.forEach((r) => {
-      csv += `${r.index},${r.x},${r.y},${formatNum(r.yPred, digits)},${formatNum(r.residual, digits)},${formatNum(r.residualSquared, digits)}\n`;
+      const devY2 = (r.y - meanY) * (r.y - meanY);
+      csv += `${r.index},${r.x},${r.y},${formatNum(r.yPred, digits)},${formatNum(r.residual, digits)},${formatNum(r.residualSquared, digits)},${formatNum(devY2, digits)}\n`;
     });
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -221,7 +283,7 @@ export const SimpleRegressionView: React.FC<SimpleRegressionViewProps> = ({ digi
               </h2>
             </div>
             <p className="text-xs text-slate-600 mt-1">
-              Ước lượng phương trình hồi quy <strong>Y = a + bX</strong>, phân tích mối tương quan và kiểm tra phần dư OLS.
+              Ước lượng phương trình hồi quy <strong>Ŷ = a + bX</strong>, phân tích mối tương quan và kiểm tra phần dư OLS.
             </p>
           </div>
 
@@ -313,20 +375,32 @@ export const SimpleRegressionView: React.FC<SimpleRegressionViewProps> = ({ digi
                       </div>
                       <div className="col-span-4">
                         <input
+                          ref={(el) => {
+                            xInputRefs.current[idx] = el;
+                          }}
                           type="number"
                           step="any"
                           value={pt.x}
                           onChange={(e) => handlePointChange(idx, 'x', e.target.value)}
-                          className="w-full text-center bg-slate-50 focus:bg-white border border-slate-200 focus:border-blue-500 rounded-lg py-1.5 px-2 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-blue-100 focus:outline-hidden"
+                          onKeyDown={(e) => handleKeyDown(e, idx, 'x')}
+                          onFocus={(e) => e.target.select()}
+                          onWheel={(e) => e.currentTarget.blur()}
+                          className="w-full text-center bg-slate-50 focus:bg-white border border-slate-200 focus:border-blue-500 rounded-lg py-1.5 px-2 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-blue-100 focus:outline-hidden [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
                       <div className="col-span-4">
                         <input
+                          ref={(el) => {
+                            yInputRefs.current[idx] = el;
+                          }}
                           type="number"
                           step="any"
                           value={pt.y}
                           onChange={(e) => handlePointChange(idx, 'y', e.target.value)}
-                          className="w-full text-center bg-slate-50 focus:bg-white border border-slate-200 focus:border-blue-500 rounded-lg py-1.5 px-2 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-blue-100 focus:outline-hidden"
+                          onKeyDown={(e) => handleKeyDown(e, idx, 'y')}
+                          onFocus={(e) => e.target.select()}
+                          onWheel={(e) => e.currentTarget.blur()}
+                          className="w-full text-center bg-slate-50 focus:bg-white border border-slate-200 focus:border-blue-500 rounded-lg py-1.5 px-2 text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-blue-100 focus:outline-hidden [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
                       <div className="col-span-2 flex justify-center">
@@ -342,12 +416,18 @@ export const SimpleRegressionView: React.FC<SimpleRegressionViewProps> = ({ digi
                   ))}
                 </div>
 
-                <button
-                  onClick={handleAddRow}
-                  className="w-full py-2 border-2 border-dashed border-blue-200 hover:border-blue-400 bg-blue-50/50 hover:bg-blue-50 rounded-xl text-blue-700 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-2xs"
-                >
-                  <Plus className="w-4 h-4" /> Thêm Dòng Quan Sát
-                </button>
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                  <button
+                    onClick={() => handleAddRow('x')}
+                    className="flex-1 py-2 border-2 border-dashed border-blue-200 hover:border-blue-400 bg-blue-50/50 hover:bg-blue-50 rounded-xl text-blue-700 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" /> Thêm Dòng Quan Sát
+                  </button>
+                  <div className="text-[11px] text-slate-500 italic hidden sm:flex items-center gap-1.5 px-1">
+                    <CornerDownLeft className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                    <span>Nhấn <strong>Enter</strong> để xuống dòng tiếp theo hoặc tự động thêm dòng mới</span>
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="space-y-3">
@@ -513,7 +593,7 @@ export const SimpleRegressionView: React.FC<SimpleRegressionViewProps> = ({ digi
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                   <TrendingUp className="w-4 h-4 text-blue-600" />
-                  Công Cụ Dự Báo Giá Trị y Theo X Mới
+                  Công Cụ Dự Báo Giá Trị Ŷ Theo X Mới
                 </h4>
                 <span className="text-xs text-slate-500 font-mono">Miền mẫu: [{minXObserved}, {maxXObserved}]</span>
               </div>
@@ -534,11 +614,11 @@ export const SimpleRegressionView: React.FC<SimpleRegressionViewProps> = ({ digi
                 </div>
 
                 <div className="sm:col-span-7 bg-white p-3.5 rounded-xl border border-slate-200 shadow-2xs">
-                  <div className="text-xs font-semibold text-slate-500">Kết quả dự báo y:</div>
+                  <div className="text-xs font-semibold text-slate-500">Kết quả dự báo Ŷ:</div>
                   {hasValidPredict && predictedY !== null ? (
                     <div>
                       <div className="text-2xl sm:text-3xl font-extrabold text-blue-700 font-mono">
-                        y = {formatNum(predictedY, digits)}
+                        Ŷ = {formatNum(predictedY, digits)}
                       </div>
                       <div className="text-xs sm:text-sm text-slate-500 font-mono mt-1">
                         = {formatNum(result.b0, digits)} {result.b1 >= 0 ? '+' : '-'} {formatNum(Math.abs(result.b1), digits)} × ({predictNum})
@@ -721,7 +801,7 @@ export const SimpleRegressionView: React.FC<SimpleRegressionViewProps> = ({ digi
                   <td className="py-3 px-4 text-right font-mono font-extrabold text-lg sm:text-xl text-rose-950 tabular-nums">
                     {formatNum(result.sse, digits)}
                   </td>
-                  <td className="py-3 px-4 text-xs sm:text-sm text-slate-500">Tổng sai lệch không giải thích được giữa thực tế Y và y (∑eᵢ²)</td>
+                  <td className="py-3 px-4 text-xs sm:text-sm text-slate-500">Tổng sai lệch không giải thích được giữa thực tế Y và Ŷ (∑eᵢ²)</td>
                 </tr>
 
                 <tr className="hover:bg-slate-50/70 transition-colors">
@@ -735,7 +815,7 @@ export const SimpleRegressionView: React.FC<SimpleRegressionViewProps> = ({ digi
                   <td className="py-3 px-4 text-right font-mono font-extrabold text-lg sm:text-xl text-slate-900 tabular-nums">
                     {formatNum(result.sst, digits)}
                   </td>
-                  <td className="py-3 px-4 text-xs sm:text-sm text-slate-500">Tổng biến thiên của Y quanh trung bình Ȳ (SST = SSR + SSE)</td>
+                  <td className="py-3 px-4 text-xs sm:text-sm text-slate-500">Tổng bình phương sai lệch toàn phần: SST = ∑(yᵢ - ȳ)² (với SST = SSR + SSE)</td>
                 </tr>
               </tbody>
             </table>
@@ -789,30 +869,37 @@ export const SimpleRegressionView: React.FC<SimpleRegressionViewProps> = ({ digi
                   <th className="py-3 px-3 text-center w-16">STT</th>
                   <th className="py-3 px-4 text-right">Biến độc lập (Xᵢ)</th>
                   <th className="py-3 px-4 text-right">Biến phụ thuộc (Yᵢ)</th>
-                  <th className="py-3 px-4 text-right">Giá trị dự đoán (yᵢ)</th>
-                  <th className="py-3 px-4 text-right">Phần dư (eᵢ = Yᵢ - yᵢ)</th>
+                  <th className="py-3 px-4 text-right">Giá trị dự đoán (Ŷᵢ)</th>
+                  <th className="py-3 px-4 text-right">Phần dư (eᵢ = Yᵢ - Ŷᵢ)</th>
                   <th className="py-3 px-4 text-right">Bình phương phần dư (eᵢ²)</th>
+                  <th className="py-3 px-4 text-right bg-purple-50 text-purple-900 font-bold">(yᵢ - ȳ)²</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-mono">
-                {result.rows.map((r) => (
-                  <tr key={r.index} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-2.5 px-3 text-center text-slate-400 font-sans text-sm">{r.index}</td>
-                    <td className="py-2.5 px-4 text-right font-semibold text-slate-800 text-sm sm:text-base">{formatNum(r.x, 2)}</td>
-                    <td className="py-2.5 px-4 text-right font-bold text-blue-900 text-sm sm:text-base">{formatNum(r.y, 2)}</td>
-                    <td className="py-2.5 px-4 text-right text-indigo-900 font-semibold text-sm sm:text-base">{formatNum(r.yPred, digits)}</td>
-                    <td
-                      className={`py-2.5 px-4 text-right font-bold text-sm sm:text-base ${
-                        r.residual >= 0 ? 'text-emerald-700' : 'text-rose-700'
-                      }`}
-                    >
-                      {formatNum(r.residual, digits)}
-                    </td>
-                    <td className="py-2.5 px-4 text-right text-slate-900 font-bold text-sm sm:text-base">
-                      {formatNum(r.residualSquared, digits)}
-                    </td>
-                  </tr>
-                ))}
+                {result.rows.map((r) => {
+                  const devY2 = (r.y - result.meanY) * (r.y - result.meanY);
+                  return (
+                    <tr key={r.index} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-2.5 px-3 text-center text-slate-400 font-sans text-sm">{r.index}</td>
+                      <td className="py-2.5 px-4 text-right font-semibold text-slate-800 text-sm sm:text-base">{formatNum(r.x, 2)}</td>
+                      <td className="py-2.5 px-4 text-right font-bold text-blue-900 text-sm sm:text-base">{formatNum(r.y, 2)}</td>
+                      <td className="py-2.5 px-4 text-right text-indigo-900 font-semibold text-sm sm:text-base">{formatNum(r.yPred, digits)}</td>
+                      <td
+                        className={`py-2.5 px-4 text-right font-bold text-sm sm:text-base ${
+                          r.residual >= 0 ? 'text-emerald-700' : 'text-rose-700'
+                        }`}
+                      >
+                        {formatNum(r.residual, digits)}
+                      </td>
+                      <td className="py-2.5 px-4 text-right text-slate-900 font-bold text-sm sm:text-base">
+                        {formatNum(r.residualSquared, digits)}
+                      </td>
+                      <td className="py-2.5 px-4 text-right font-bold text-purple-950 bg-purple-50/20 text-sm sm:text-base">
+                        {formatNum(devY2, digits)}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
               <tfoot className="bg-slate-50 font-mono font-bold text-slate-800 border-t-2 border-slate-300">
                 <tr>
@@ -829,6 +916,9 @@ export const SimpleRegressionView: React.FC<SimpleRegressionViewProps> = ({ digi
                   </td>
                   <td className="py-3 px-4 text-right text-rose-800 text-sm sm:text-base">
                     {formatNum(result.sse, digits)} (SSE)
+                  </td>
+                  <td className="py-3 px-4 text-right text-purple-900 text-sm sm:text-base font-extrabold bg-purple-50/50">
+                    {formatNum(result.sst, digits)} (SST)
                   </td>
                 </tr>
               </tfoot>

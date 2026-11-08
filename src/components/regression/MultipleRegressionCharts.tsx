@@ -1,20 +1,21 @@
 import React, { useRef, useState } from 'react';
-import { Camera, Layers, Activity, TrendingUp } from 'lucide-react';
+import { Camera, Layers, Activity, TrendingUp, Box } from 'lucide-react';
 import { MultipleRegressionResult } from '../../types/regression';
 import { formatNum } from '../../utils/mathStatistics';
+import { Regression3DPlot } from './Regression3DPlot';
 
 interface MultipleRegressionChartsProps {
   result: MultipleRegressionResult;
   digits?: number;
 }
 
-type ChartTab = 'observed-predicted' | 'residuals-predicted' | 'partial-effect';
+type ChartTab = '3d-plane' | 'observed-predicted' | 'residuals-predicted' | 'partial-effect';
 
 export const MultipleRegressionCharts: React.FC<MultipleRegressionChartsProps> = ({
   result,
   digits = 4,
 }) => {
-  const [activeTab, setActiveTab] = useState<ChartTab>('observed-predicted');
+  const [activeTab, setActiveTab] = useState<ChartTab>('3d-plane');
   const [selectedVarIndex, setSelectedVarIndex] = useState<number>(0);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -138,7 +139,7 @@ export const MultipleRegressionCharts: React.FC<MultipleRegressionChartsProps> =
           fontSize="12"
           fontWeight="600"
         >
-          Giá trị Dự đoán (y)
+          Giá trị Dự đoán (Ŷ)
         </text>
         <text
           x={-margin.top - plotHeight / 2}
@@ -293,7 +294,7 @@ export const MultipleRegressionCharts: React.FC<MultipleRegressionChartsProps> =
           fontSize="12"
           fontWeight="600"
         >
-          Giá trị Dự đoán (y)
+          Giá trị Dự đoán (Ŷ)
         </text>
         <text
           x={-margin.top - plotHeight / 2}
@@ -304,7 +305,7 @@ export const MultipleRegressionCharts: React.FC<MultipleRegressionChartsProps> =
           fontWeight="600"
           transform="rotate(-90)"
         >
-          Phần dư (e = Y - y)
+          Phần dư (e = Y - Ŷ)
         </text>
 
         {/* Points */}
@@ -517,19 +518,32 @@ export const MultipleRegressionCharts: React.FC<MultipleRegressionChartsProps> =
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={handleDownloadPNG}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-2xs"
-          >
-            <Camera className="w-3.5 h-3.5 text-teal-600" />
-            Tải ảnh PNG
-          </button>
+          {activeTab !== '3d-plane' && (
+            <button
+              onClick={handleDownloadPNG}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-2xs"
+            >
+              <Camera className="w-3.5 h-3.5 text-teal-600" />
+              Tải ảnh PNG
+            </button>
+          )}
         </div>
       </div>
 
       {/* Tab Switcher */}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50 p-2 rounded-xl border border-slate-200/80">
         <div className="flex flex-wrap gap-1.5">
+          <button
+            onClick={() => setActiveTab('3d-plane')}
+            className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 ${
+              activeTab === '3d-plane'
+                ? 'bg-white text-teal-800 shadow-2xs border border-teal-200 font-bold'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <Box className="w-4 h-4 text-teal-600" />
+            Biểu Đồ 3D Mặt Phẳng Hồi Quy
+          </button>
           <button
             onClick={() => setActiveTab('observed-predicted')}
             className={`px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all flex items-center gap-1.5 ${
@@ -539,7 +553,7 @@ export const MultipleRegressionCharts: React.FC<MultipleRegressionChartsProps> =
             }`}
           >
             <Activity className="w-4 h-4 text-blue-600" />
-            Thực tế (Y) theo Dự đoán (y)
+            Thực tế (Y) theo Dự đoán (Ŷ)
           </button>
           <button
             onClick={() => setActiveTab('residuals-predicted')}
@@ -550,7 +564,7 @@ export const MultipleRegressionCharts: React.FC<MultipleRegressionChartsProps> =
             }`}
           >
             <Layers className="w-4 h-4 text-indigo-600" />
-            Phần dư (e) theo Dự đoán (y)
+            Phần dư (e) theo Dự đoán (Ŷ)
           </button>
           <button
             onClick={() => setActiveTab('partial-effect')}
@@ -586,9 +600,14 @@ export const MultipleRegressionCharts: React.FC<MultipleRegressionChartsProps> =
 
       {/* Description of active chart */}
       <div className="text-xs text-slate-600 bg-blue-50/50 p-2.5 rounded-lg border border-blue-100">
+        {activeTab === '3d-plane' && (
+          <p>
+            <strong>Mặt phẳng hồi quy 3D OLS:</strong> Trực quan hóa mặt phẳng dự đoán Ŷ theo 2 biến độc lập được chọn ({variableNames[0]} và {variableNames[1]}) trong không gian 3 chiều. Các điểm cầu xanh lá (e ≥ 0), điểm đỏ (e &lt; 0) kèm đoạn thẳng đứng thể hiện độ lớn phần dư OLS. Bạn có thể kéo chuột để xoay 360°, phóng to/thu nhỏ và chọn các góc nhìn khác nhau.
+          </p>
+        )}
         {activeTab === 'observed-predicted' && (
           <p>
-            <strong>Đường chuẩn 45° nét đứt xanh dương</strong> thể hiện độ khớp hoàn hảo (Y = y).
+            <strong>Đường chuẩn 45° nét đứt xanh dương</strong> thể hiện độ khớp hoàn hảo (Y = Ŷ).
             Các điểm dữ liệu tập trung càng gần đường 45° thì hệ số xác định R² càng cao ({formatNum(result.rSquared, digits)}).
           </p>
         )}
@@ -605,44 +624,48 @@ export const MultipleRegressionCharts: React.FC<MultipleRegressionChartsProps> =
         )}
       </div>
 
-      {/* SVG Container */}
-      <div className="w-full overflow-x-auto bg-slate-50/50 rounded-xl p-2 border border-slate-100 flex justify-center">
-        <svg
-          ref={svgRef}
-          viewBox={`0 0 ${width} ${height}`}
-          className="w-full max-w-[760px] h-auto select-none font-sans"
-        >
-          <rect width={width} height={height} fill="#ffffff" rx="8" />
+      {/* 3D Canvas vs 2D SVG Container */}
+      {activeTab === '3d-plane' ? (
+        <Regression3DPlot result={result} digits={digits} />
+      ) : (
+        <div className="w-full overflow-x-auto bg-slate-50/50 rounded-xl p-2 border border-slate-100 flex justify-center">
+          <svg
+            ref={svgRef}
+            viewBox={`0 0 ${width} ${height}`}
+            className="w-full max-w-[760px] h-auto select-none font-sans"
+          >
+            <rect width={width} height={height} fill="#ffffff" rx="8" />
 
-          {activeTab === 'observed-predicted' && renderObservedVsPredicted()}
-          {activeTab === 'residuals-predicted' && renderResidualsVsPredicted()}
-          {activeTab === 'partial-effect' && renderPartialEffect()}
+            {activeTab === 'observed-predicted' && renderObservedVsPredicted()}
+            {activeTab === 'residuals-predicted' && renderResidualsVsPredicted()}
+            {activeTab === 'partial-effect' && renderPartialEffect()}
 
-          {/* Hover Tooltip inside SVG */}
-          {hoveredRow && (
-            <g
-              transform={`translate(${Math.min(width - 170, 100)}, ${margin.top + 10})`}
-            >
-              <rect width="160" height="58" fill="#1e293b" rx="6" opacity="0.95" />
-              <text x="80" y="16" fill="#f8fafc" fontSize="10" textAnchor="middle" fontWeight="bold">
-                Quan sát #{hoveredIndex! + 1}
-              </text>
-              <text x="80" y="30" fill="#93c5fd" fontSize="9" textAnchor="middle">
-                Y thực tế = {formatNum(hoveredRow.y, 2)} | y = {formatNum(hoveredRow.yPred, 2)}
-              </text>
-              <text
-                x="80"
-                y="46"
-                fill={hoveredRow.residual >= 0 ? '#4ade80' : '#f87171'}
-                fontSize="9"
-                textAnchor="middle"
+            {/* Hover Tooltip inside SVG */}
+            {hoveredRow && (
+              <g
+                transform={`translate(${Math.min(width - 170, 100)}, ${margin.top + 10})`}
               >
-                Phần dư e = {formatNum(hoveredRow.residual, 2)}
-              </text>
-            </g>
-          )}
-        </svg>
-      </div>
+                <rect width="160" height="58" fill="#1e293b" rx="6" opacity="0.95" />
+                <text x="80" y="16" fill="#f8fafc" fontSize="10" textAnchor="middle" fontWeight="bold">
+                  Quan sát #{hoveredIndex! + 1}
+                </text>
+                <text x="80" y="30" fill="#93c5fd" fontSize="9" textAnchor="middle">
+                  Y thực tế = {formatNum(hoveredRow.y, 2)} | Ŷ = {formatNum(hoveredRow.yPred, 2)}
+                </text>
+                <text
+                  x="80"
+                  y="46"
+                  fill={hoveredRow.residual >= 0 ? '#4ade80' : '#f87171'}
+                  fontSize="9"
+                  textAnchor="middle"
+                >
+                  Phần dư e = {formatNum(hoveredRow.residual, 2)}
+                </text>
+              </g>
+            )}
+          </svg>
+        </div>
+      )}
     </div>
   );
 };

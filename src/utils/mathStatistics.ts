@@ -5,6 +5,7 @@ import {
   GroupedRowCalculation,
   QuartileInterpolationDetail,
   UngroupedCalculationSteps,
+  UngroupedFrequencyItem,
 } from '../types/statistics';
 
 /**
@@ -49,48 +50,134 @@ export function formatNum(
  * Supports spaces, commas, semicolons, tabs, newlines.
  * Handles negative numbers and decimals.
  */
-export function parseRawNumbers(text: string): { numbers: number[]; invalidTokens: string[] } {
+/**
+ * Parses raw text input into an array of valid numbers and frequency items.
+ * Supports:
+ * - Plain numbers with default frequency n = 1: "5, 7, 8, 9, 10"
+ * - Values with explicit frequencies:
+ *   + Colon format: "8: 3", "8:3" (value 8, frequency 3)
+ *   + Parenthesis format: "8(3)", "8 (3)"
+ *   + Times/Multiplication format: "8*3", "8x3"
+ *   + Tab-separated columns (Excel paste): "8\t3"
+ * - Delimiters: commas, semicolons, tabs, newlines, spaces
+ * - Negative numbers and decimals.
+ */
+export function parseRawNumbers(text: string): {
+  numbers: number[];
+  items: UngroupedFrequencyItem[];
+  invalidTokens: string[];
+  totalN: number;
+  distinctCount: number;
+} {
   if (!text || !text.trim()) {
-    return { numbers: [], invalidTokens: [] };
+    return { numbers: [], items: [], invalidTokens: [], totalN: 0, distinctCount: 0 };
   }
 
-  // Normalize delimiters (replace comma if used as list delimiter or European decimal)
-  // We handle European decimals if formatted like "3,5" surrounded by spaces or in standard list
-  // Best strategy:
-  // Split on newlines, semicolons, tabs first, or commas between numbers.
-  // Standard Vietnamese/Excel list pasting: "5, 7, 8, 8, 9, 10" or "5\t7\t8" or "5.5, -2.4"
-  // If someone enters "5, 7.5, -3.2", commas are separators.
-  
-  // Replace multiple whitespace/commas/semicolons with a single token separator
-  // First, detect if comma is used as decimal separator (e.g. "3,14; 2,5; 7,8")
-  const hasSemicolon = text.includes(';');
-  let processedText = text;
-  
-  if (hasSemicolon) {
-    // If semicolons are used, commas are decimal points!
-    processedText = processedText.replace(/,/g, '.').replace(/;/g, ' ');
-  } else {
-    // Standard delimiter: commas, spaces, tabs, newlines
-    processedText = processedText.replace(/,/g, ' ');
-  }
-
-  const tokens = processedText.trim().split(/\s+/).filter(Boolean);
   const numbers: number[] = [];
+  const items: UngroupedFrequencyItem[] = [];
   const invalidTokens: string[] = [];
 
-  for (const token of tokens) {
-    const cleanToken = token.trim();
-    if (!cleanToken) continue;
+  const hasSemicolon = text.includes(';');
 
-    const num = Number(cleanToken);
-    if (!Number.isNaN(num) && Number.isFinite(num)) {
-      numbers.push(num);
-    } else {
-      invalidTokens.push(cleanToken);
+  // Pre-process colons, parentheses, and asterisks spacing
+  let processed = text;
+  processed = processed.replace(/([0-9.,-]+)\s*:\s*([0-9]+)/g, '$1:$2');
+  processed = processed.replace(/([0-9.,-]+)\s*\(\s*([0-9]+)\s*\)/g, '$1($2)');
+  processed = processed.replace(/([0-9.,-]+)\s*[*xX]\s*([0-9]+)/g, '$1*$2');
+
+  const lines = processed.split(/[\r\n;]+/);
+  let itemIdCounter = 1;
+
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+    if (!trimmedLine) continue;
+
+    // Check if line contains tabs from Excel (column 1: value, column 2: frequency)
+    if (trimmedLine.includes('\t')) {
+      const parts = trimmedLine.split('\t').map((p) => p.trim()).filter(Boolean);
+      if (parts.length >= 2) {
+        let valStr = parts[0];
+        let freqStr = parts[1];
+        if (hasSemicolon) valStr = valStr.replace(/,/g, '.');
+
+        const val = Number(valStr);
+        const freqRaw = Number(freqStr);
+        if (!Number.isNaN(val) && Number.isFinite(val)) {
+          const freq = !Number.isNaN(freqRaw) && freqRaw > 0 ? Math.min(10000, Math.round(freqRaw)) : 1;
+          for (let i = 0; i < freq; i++) {
+            numbers.push(val);
+          }
+          items.push({
+            id: String(itemIdCounter++),
+            value: val,
+            frequency: freq,
+          });
+          continue;
+        }
+      }
+    }
+
+    // Split line by commas or spaces into tokens
+    const rawTokens = trimmedLine.includes(',')
+      ? trimmedLine.split(',')
+      : trimmedLine.split(/\s+/);
+
+    for (const rawToken of rawTokens) {
+      const token = rawToken.trim();
+      if (!token) continue;
+
+      let valuePart = token;
+      let freqPart = '1';
+
+      if (token.includes(':')) {
+        const parts = token.split(':');
+        valuePart = parts[0].trim();
+        freqPart = parts[1]?.trim() || '1';
+      } else if (token.includes('(') && token.endsWith(')')) {
+        const pIdx = token.indexOf('(');
+        valuePart = token.slice(0, pIdx).trim();
+        freqPart = token.slice(pIdx + 1, -1).trim();
+      } else if (/^(.+)[*xX](\d+)$/.test(token)) {
+        const match = token.match(/^(.+)[*xX](\d+)$/);
+        if (match) {
+          valuePart = match[1].trim();
+          freqPart = match[2].trim();
+        }
+      }
+
+      if (hasSemicolon) {
+        valuePart = valuePart.replace(/,/g, '.');
+      }
+
+      const numVal = Number(valuePart);
+      const numFreq = Number(freqPart);
+
+      if (!Number.isNaN(numVal) && Number.isFinite(numVal)) {
+        // Frequency defaults to 1 if not specified or invalid
+        const finalFreq = !Number.isNaN(numFreq) && numFreq > 0 ? Math.min(10000, Math.round(numFreq)) : 1;
+        for (let i = 0; i < finalFreq; i++) {
+          numbers.push(numVal);
+        }
+        items.push({
+          id: String(itemIdCounter++),
+          value: numVal,
+          frequency: finalFreq,
+        });
+      } else {
+        invalidTokens.push(token);
+      }
     }
   }
 
-  return { numbers, invalidTokens };
+  const distinctCount = new Set(numbers).size;
+
+  return {
+    numbers,
+    items,
+    invalidTokens,
+    totalN: numbers.length,
+    distinctCount,
+  };
 }
 
 /**

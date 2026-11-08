@@ -404,7 +404,7 @@ export const SimpleScatterPlot: React.FC<SimpleScatterPlotProps> = ({
               {hoveredResidual && (
                 <>
                   <text x="70" y="32" fill="#93c5fd" fontSize="9" textAnchor="middle">
-                    y = {formatNum(hoveredResidual.yPred, 2)}
+                    Ŷ = {formatNum(hoveredResidual.yPred, 2)}
                   </text>
                   <text
                     x="70"
@@ -432,13 +432,13 @@ export const SimpleScatterPlot: React.FC<SimpleScatterPlotProps> = ({
           {result && showTrendline && (
             <div className="flex items-center gap-1.5">
               <span className="w-5 h-0.5 bg-blue-600 inline-block"></span>
-              <span>Đường hồi quy y = a + bX</span>
+              <span>Đường hồi quy Ŷ = a + bX</span>
             </div>
           )}
           {result && showTrendline && (
             <div className="flex items-center gap-1.5">
               <span className="w-4 h-0 border-t border-dashed border-red-400 inline-block"></span>
-              <span>Đoạn phần dư e = Y - y</span>
+              <span>Đoạn phần dư e = Y - Ŷ</span>
             </div>
           )}
         </div>

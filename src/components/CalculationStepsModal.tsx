@@ -68,8 +68,10 @@ export const CalculationStepsModal: React.FC<CalculationStepsModalProps> = ({
                 <p className="text-xs text-slate-600 mb-2">
                   Sắp xếp mẫu số liệu theo thứ tự không giảm để xác định phân vị và khoảng biến thiên:
                 </p>
-                <div className="bg-white p-3 rounded-lg border border-slate-200 font-mono text-sm text-slate-800 break-words leading-relaxed">
-                  {ungroupedSteps.sortedList.join(', ')}
+                <div className="bg-white p-3 rounded-lg border border-slate-200 font-mono text-sm text-slate-800 break-words leading-relaxed max-h-36 overflow-y-auto">
+                  {ungroupedSteps.sortedList.length <= 120
+                    ? ungroupedSteps.sortedList.join(', ')
+                    : `${ungroupedSteps.sortedList.slice(0, 100).join(', ')}, ... và ${ungroupedSteps.sortedList.length - 100} số nữa`}
                 </div>
                 <div className="mt-2 text-xs sm:text-sm text-slate-600 flex items-center gap-2">
                   <span>Cỡ mẫu: <strong>n = {stats.n}</strong></span>

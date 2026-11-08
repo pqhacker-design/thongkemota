@@ -8,6 +8,12 @@ export interface UngroupedData {
   errorMessage?: string;
 }
 
+export interface UngroupedFrequencyItem {
+  id: string;
+  value: number;
+  frequency: number; // default is 1
+}
+
 export interface GroupInterval {
   id: string;
   lower: number; // a_i

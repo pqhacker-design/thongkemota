@@ -45,7 +45,11 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({ isOpen, onClose 
             </h3>
             <ul className="list-disc pl-5 space-y-1.5 text-xs text-slate-600">
               <li>
-                <strong>Dữ liệu thường:</strong> Nhập dãy số vào ô văn bản, các số cách nhau bởi dấu cách, dấu phẩy, dấu chấm phẩy hoặc dòng mới. Bạn có thể sao chép trực tiếp một cột hoặc hàng từ Excel và dán vào ứng dụng.
+                <strong>Dữ liệu thường (không ghép nhóm):</strong> Hỗ trợ 2 chế độ:
+                <ul className="list-circle pl-4 mt-1 space-y-1 text-slate-500">
+                  <li><strong>Dạng Bảng Giá trị & Tần số (n):</strong> Nhập trực tiếp giá trị <code>xᵢ</code> và tần số xuất hiện <code>nᵢ</code> (nếu để trống, tần số mặc định là <strong>1</strong>). Tiện lợi khi một số liệu lặp lại nhiều lần, có nút thêm dòng, gộp giá trị trùng và dán từ Excel.</li>
+                  <li><strong>Dạng Văn bản nhanh:</strong> Nhập số cách nhau bởi dấu phẩy, dấu cách; hỗ trợ cú pháp tần số <code>8: 5</code> hoặc <code>8(5)</code> (nghĩa là giá trị 8 xuất hiện 5 lần). Số đơn lẻ mặc định có tần số là 1.</li>
+                </ul>
               </li>
               <li>
                 <strong>Dữ liệu ghép nhóm:</strong> Nhập cận dưới, cận trên và tần số vào từng hàng. Ứng dụng tự động kiểm tra tính không chồng lấn của các khoảng và tự động tính giá trị đại diện <code>xᵢ = (aᵢ + bᵢ)/2</code>.
@@ -151,8 +155,8 @@ export const UserGuideModal: React.FC<UserGuideModalProps> = ({ isOpen, onClose 
               Hồi quy tuyến tính & Phân tích tương quan
             </h3>
             <div className="p-3.5 bg-teal-50 border border-teal-200 rounded-lg text-xs text-teal-950 space-y-1.5">
-              <p>• <strong>Hồi quy tuyến tính đơn:</strong> Mô hình hóa quan hệ giữa 1 biến X và biến Y bằng phương trình <code>y = a + bX</code>; tính hệ số tương quan Pearson <code>r</code>, hệ số xác định <code>R²</code>, sai số chuẩn <code>SER</code> và vẽ biểu đồ phân tán kèm đường hồi quy OLS.</p>
-              <p>• <strong>Hồi quy tuyến tính bội:</strong> Mô hình hóa từ 2 đến 10 biến độc lập <code>X₁, X₂, ... Xₖ</code> tác động lên <code>Y</code> bằng đại số ma trận OLS <code>β̂ = (XᵀX)⁻¹XᵀY</code>; tính <code>R²</code> hiệu chỉnh (R²_adj), ma trận tương quan Heatmap, kiểm tra đa cộng tuyến và vẽ biểu đồ chẩn đoán độ khớp.</p>
+              <p>• <strong>Hồi quy tuyến tính đơn:</strong> Mô hình hóa quan hệ giữa 1 biến X và biến Y bằng phương trình <code>Ŷ = a + bX</code>; tính hệ số tương quan Pearson <code>r</code>, hệ số xác định <code>R²</code>, sai số chuẩn <code>SER</code> và vẽ biểu đồ phân tán kèm đường hồi quy OLS.</p>
+              <p>• <strong>Hồi quy tuyến tính bội:</strong> Mô hình hóa từ 2 đến 10 biến độc lập <code>X₁, X₂, ... Xₖ</code> tác động lên <code>Y</code> bằng đại số ma trận OLS <code>β̂ = (XᵀX)⁻¹XᵀY</code>; tính tổng bình phương độ lệch <code>SST = ∑(yᵢ - ȳ)²</code> (với quan hệ phân rã <code>SST = SSR + SSE</code>), hệ số xác định <code>R²</code>, trực quan hóa <strong>Biểu đồ 3D tương tác (Three.js WebGL)</strong> với mặt phẳng hồi quy Ŷ xoay 360°, ma trận tương quan Heatmap, kiểm tra đa cộng tuyến và vẽ biểu đồ chẩn đoán độ khớp.</p>
               <p>• <strong>Nguyên lý Ceteris Paribus:</strong> Mỗi hệ số hồi quy riêng phần <code>bⱼ</code> cho biết khi <code>Xⱼ</code> tăng 1 đơn vị thì <code>Y</code> thay đổi trung bình <code>bⱼ</code> đơn vị khi tất cả các biến độc lập khác giữ nguyên không đổi.</p>
               <p>• <strong>Cảnh báo quan trọng:</strong> Tương quan không khẳng định quan hệ nhân quả (Correlation ≠ Causation); cảnh báo ngoại suy khi dự báo ngoài phạm vi giá trị quan sát của mẫu.</p>
             </div>

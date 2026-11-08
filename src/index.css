@@ -8,6 +8,17 @@
   .font-mono, code, pre, .tabular-nums {
     font-family: 'JetBrains Mono', monospace;
   }
+
+  /* Ẩn hoàn toàn nút tăng giảm (spinner buttons) của ô nhập số */
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type='number'] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
 }
 
 @media print {

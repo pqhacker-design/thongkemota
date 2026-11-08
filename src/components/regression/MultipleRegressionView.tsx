@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   Plus,
   Trash2,
@@ -15,6 +15,7 @@ import {
   Layers,
   TrendingUp,
   Settings,
+  CornerDownLeft,
 } from 'lucide-react';
 import { MultipleRegressionResult } from '../../types/regression';
 import { calculateMultipleLinearRegression } from '../../utils/regressionMath';
@@ -117,9 +118,64 @@ export const MultipleRegressionView: React.FC<MultipleRegressionViewProps> = ({ 
     });
   };
 
+  // 2D grid refs: cellRefs[`${rowIdx}-${colIdx}`]
+  const cellRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
+  const pendingFocusCellRef = useRef<{ row: number; col: number } | null>(null);
+
+  useEffect(() => {
+    if (pendingFocusCellRef.current !== null) {
+      const { row, col } = pendingFocusCellRef.current;
+      pendingFocusCellRef.current = null;
+      const key = `${row}-${col}`;
+      const el = cellRefs.current[key];
+      if (el) {
+        el.focus();
+        el.select();
+      }
+    }
+  }, [dataRows]);
+
   // Add row
-  const handleAddRow = () => {
+  const handleAddRow = (focusCol: number = 0) => {
+    pendingFocusCellRef.current = { row: dataRows.length, col: focusCol };
     setDataRows((prev) => [...prev, Array(k + 1).fill(0)]);
+  };
+
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    rowIdx: number,
+    colIdx: number
+  ) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      // Pressing Enter moves straight down to the same column in rowIdx + 1 (stays in column Y or column X)
+      const targetCol = colIdx;
+      if (rowIdx < dataRows.length - 1) {
+        const nextKey = `${rowIdx + 1}-${targetCol}`;
+        const nextEl = cellRefs.current[nextKey];
+        if (nextEl) {
+          nextEl.focus();
+          nextEl.select();
+        }
+      } else {
+        // At the last row: automatically add a new row and focus on the same column!
+        handleAddRow(targetCol);
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (rowIdx < dataRows.length - 1) {
+        const nextKey = `${rowIdx + 1}-${colIdx}`;
+        cellRefs.current[nextKey]?.focus();
+        cellRefs.current[nextKey]?.select();
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (rowIdx > 0) {
+        const prevKey = `${rowIdx - 1}-${colIdx}`;
+        cellRefs.current[prevKey]?.focus();
+        cellRefs.current[prevKey]?.select();
+      }
+    }
   };
 
   // Delete row
@@ -241,9 +297,11 @@ export const MultipleRegressionView: React.FC<MultipleRegressionViewProps> = ({ 
   // Copy Residual Table
   const handleCopyTable = () => {
     if (!result) return;
-    let tsv = 'STT\t' + variableNames.join('\t') + '\tY\tY_du_doan\te\te^2\n';
+    const meanY = result.means[k];
+    let tsv = 'STT\t' + variableNames.join('\t') + '\tY\tY_du_doan\te\te^2\t(Y-Y_tb)^2\n';
     result.rows.forEach((r) => {
-      tsv += `${r.index}\t${r.xValues.join('\t')}\t${r.y}\t${formatNum(r.yPred, digits)}\t${formatNum(r.residual, digits)}\t${formatNum(r.residualSquared, digits)}\n`;
+      const devY2 = (r.y - meanY) * (r.y - meanY);
+      tsv += `${r.index}\t${r.xValues.join('\t')}\t${r.y}\t${formatNum(r.yPred, digits)}\t${formatNum(r.residual, digits)}\t${formatNum(r.residualSquared, digits)}\t${formatNum(devY2, digits)}\n`;
     });
     navigator.clipboard.writeText(tsv);
     setCopiedTable(true);
@@ -253,9 +311,11 @@ export const MultipleRegressionView: React.FC<MultipleRegressionViewProps> = ({ 
   // Export CSV
   const handleExportCSV = () => {
     if (!result) return;
-    let csv = '\uFEFFSTT,' + variableNames.join(',') + ',Y_Thực_tế,Y_Dự_đoán,Phần_dư_e,e_bình_phương\n';
+    const meanY = result.means[k];
+    let csv = '\uFEFFSTT,' + variableNames.join(',') + ',Y_Thực_tế,Y_Dự_đoán,Phần_dư_e,e_bình_phương,Do_lech_binh_phuong_(Y-Ytb)^2\n';
     result.rows.forEach((r) => {
-      csv += `${r.index},${r.xValues.join(',')},${r.y},${formatNum(r.yPred, digits)},${formatNum(r.residual, digits)},${formatNum(r.residualSquared, digits)}\n`;
+      const devY2 = (r.y - meanY) * (r.y - meanY);
+      csv += `${r.index},${r.xValues.join(',')},${r.y},${formatNum(r.yPred, digits)},${formatNum(r.residual, digits)},${formatNum(r.residualSquared, digits)},${formatNum(devY2, digits)}\n`;
     });
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -442,21 +502,33 @@ export const MultipleRegressionView: React.FC<MultipleRegressionViewProps> = ({ 
                           {row.slice(0, k).map((val, cIdx) => (
                             <td key={cIdx} className="p-1">
                               <input
+                                ref={(el) => {
+                                  cellRefs.current[`${rIdx}-${cIdx}`] = el;
+                                }}
                                 type="number"
                                 step="any"
                                 value={val}
                                 onChange={(e) => handleCellChange(rIdx, cIdx, e.target.value)}
-                                className="w-16 text-center bg-slate-50 focus:bg-white border border-slate-200 focus:border-teal-500 rounded py-1 px-1 text-xs font-semibold text-slate-800"
+                                onKeyDown={(e) => handleKeyDown(e, rIdx, cIdx)}
+                                onFocus={(e) => e.target.select()}
+                                onWheel={(e) => e.currentTarget.blur()}
+                                className="w-16 text-center bg-slate-50 focus:bg-white border border-slate-200 focus:border-teal-500 rounded py-1 px-1 text-xs font-semibold text-slate-800 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                               />
                             </td>
                           ))}
                           <td className="p-1 bg-teal-50/40">
                             <input
+                              ref={(el) => {
+                                cellRefs.current[`${rIdx}-${k}`] = el;
+                              }}
                               type="number"
                               step="any"
                               value={row[k]}
                               onChange={(e) => handleCellChange(rIdx, k, e.target.value)}
-                              className="w-16 text-center bg-white border border-teal-300 focus:border-teal-500 rounded py-1 px-1 text-xs font-bold text-teal-900"
+                              onKeyDown={(e) => handleKeyDown(e, rIdx, k)}
+                              onFocus={(e) => e.target.select()}
+                              onWheel={(e) => e.currentTarget.blur()}
+                              className="w-16 text-center bg-white border border-teal-300 focus:border-teal-500 rounded py-1 px-1 text-xs font-bold text-teal-900 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             />
                           </td>
                           <td className="py-1 px-2">
@@ -473,12 +545,18 @@ export const MultipleRegressionView: React.FC<MultipleRegressionViewProps> = ({ 
                   </table>
                 </div>
 
-                <button
-                  onClick={handleAddRow}
-                  className="w-full py-2 border-2 border-dashed border-teal-200 hover:border-teal-400 bg-teal-50/50 hover:bg-teal-50 rounded-xl text-teal-700 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-2xs"
-                >
-                  <Plus className="w-4 h-4" /> Thêm Dòng Quan Sát
-                </button>
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                  <button
+                    onClick={() => handleAddRow(0)}
+                    className="flex-1 py-2 border-2 border-dashed border-teal-200 hover:border-teal-400 bg-teal-50/50 hover:bg-teal-50 rounded-xl text-teal-700 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4" /> Thêm Dòng Quan Sát
+                  </button>
+                  <div className="text-[11px] text-slate-500 italic hidden sm:flex items-center gap-1.5 px-1">
+                    <CornerDownLeft className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                    <span>Nhấn <strong>Enter</strong> để xuống dòng tiếp theo hoặc tự động thêm dòng mới</span>
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="space-y-3">
@@ -544,9 +622,7 @@ export const MultipleRegressionView: React.FC<MultipleRegressionViewProps> = ({ 
                 <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm sm:text-base text-teal-100">
                   <span>Hệ số chặn: <strong className="text-white font-mono text-base sm:text-lg">a (b₀) = {formatNum(result.coefficients[0].value, digits)}</strong></span>
                   <span>R² = <strong className="text-white font-mono text-base sm:text-lg">{formatNum(result.rSquared, digits)}</strong> ({(result.rSquared * 100).toFixed(1)}%)</span>
-                  {result.adjRSquared !== null && (
-                    <span>R²_adj = <strong className="text-white font-mono text-base sm:text-lg">{formatNum(result.adjRSquared, digits)}</strong></span>
-                  )}
+                  <span>SST = <strong className="text-white font-mono text-base sm:text-lg">{formatNum(result.sst, digits)}</strong></span>
                 </div>
               </div>
             ) : (
@@ -612,13 +688,13 @@ export const MultipleRegressionView: React.FC<MultipleRegressionViewProps> = ({ 
 
               <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs flex flex-col justify-between">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-purple-600 uppercase tracking-wider">R² Hiệu Chỉnh</span>
-                  <span className="font-mono text-base px-2.5 py-0.5 rounded-md bg-purple-50 text-purple-900 font-bold border border-purple-200 shadow-2xs">R²_adj</span>
+                  <span className="text-xs font-bold text-purple-600 uppercase tracking-wider">Tổng Bình Phương Độ Lệch</span>
+                  <span className="font-mono text-base px-2.5 py-0.5 rounded-md bg-purple-50 text-purple-900 font-bold border border-purple-200 shadow-2xs">SST</span>
                 </div>
                 <div className="text-2xl sm:text-3xl font-extrabold font-mono text-purple-950 mt-2">
-                  {result.adjRSquared !== null ? formatNum(result.adjRSquared, digits) : 'N/A'}
+                  {formatNum(result.sst, digits)}
                 </div>
-                <div className="text-[11px] text-slate-400 mt-1">Phạt biến dư thừa</div>
+                <div className="text-[11px] text-purple-700 font-bold mt-1">SST = ∑(yᵢ - ȳ)²</div>
               </div>
 
               <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs flex flex-col justify-between">
@@ -673,7 +749,7 @@ export const MultipleRegressionView: React.FC<MultipleRegressionViewProps> = ({ 
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                   <TrendingUp className="w-4 h-4 text-teal-600" />
-                  Công Cụ Dự Báo Giá Trị y Với {k} Biến Độc Lập
+                  Công Cụ Dự Báo Giá Trị Ŷ Với {k} Biến Độc Lập
                 </h4>
               </div>
 
@@ -697,10 +773,10 @@ export const MultipleRegressionView: React.FC<MultipleRegressionViewProps> = ({ 
 
               <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <div className="text-xs font-semibold text-slate-500">Kết quả dự báo y:</div>
+                  <div className="text-xs font-semibold text-slate-500">Kết quả dự báo Ŷ:</div>
                   {predictedYVal !== null ? (
                     <div className="text-2xl sm:text-3xl font-extrabold text-teal-700 font-mono mt-1">
-                      y = {formatNum(predictedYVal, digits)}
+                      Ŷ = {formatNum(predictedYVal, digits)}
                     </div>
                   ) : (
                     <div className="text-xs text-slate-400 italic">
@@ -896,38 +972,45 @@ export const MultipleRegressionView: React.FC<MultipleRegressionViewProps> = ({ 
                     </th>
                   ))}
                   <th className="py-3 px-4 text-right bg-teal-50 text-teal-900 font-extrabold">Y thực tế</th>
-                  <th className="py-3 px-4 text-right">y dự đoán</th>
+                  <th className="py-3 px-4 text-right">Ŷ dự đoán</th>
                   <th className="py-3 px-4 text-right">Phần dư (e)</th>
                   <th className="py-3 px-4 text-right">e²</th>
+                  <th className="py-3 px-4 text-right bg-purple-50 text-purple-900 font-bold">(yᵢ - ȳ)²</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-mono">
-                {result.rows.map((r) => (
-                  <tr key={r.index} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-2.5 px-3 text-center text-slate-400 font-sans text-sm">{r.index}</td>
-                    {r.xValues.map((xv, xvIdx) => (
-                      <td key={xvIdx} className="py-2.5 px-4 text-right text-slate-800 text-sm sm:text-base font-semibold">
-                        {formatNum(xv, 2)}
+                {result.rows.map((r) => {
+                  const devY2 = (r.y - result.means[k]) * (r.y - result.means[k]);
+                  return (
+                    <tr key={r.index} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-2.5 px-3 text-center text-slate-400 font-sans text-sm">{r.index}</td>
+                      {r.xValues.map((xv, xvIdx) => (
+                        <td key={xvIdx} className="py-2.5 px-4 text-right text-slate-800 text-sm sm:text-base font-semibold">
+                          {formatNum(xv, 2)}
+                        </td>
+                      ))}
+                      <td className="py-2.5 px-4 text-right font-extrabold text-teal-950 bg-teal-50/30 text-sm sm:text-base">
+                        {formatNum(r.y, 2)}
                       </td>
-                    ))}
-                    <td className="py-2.5 px-4 text-right font-extrabold text-teal-950 bg-teal-50/30 text-sm sm:text-base">
-                      {formatNum(r.y, 2)}
-                    </td>
-                    <td className="py-2.5 px-4 text-right text-indigo-900 font-bold text-sm sm:text-base">
-                      {formatNum(r.yPred, digits)}
-                    </td>
-                    <td
-                      className={`py-2.5 px-4 text-right font-bold text-sm sm:text-base ${
-                        r.residual >= 0 ? 'text-emerald-700' : 'text-rose-700'
-                      }`}
-                    >
-                      {formatNum(r.residual, digits)}
-                    </td>
-                    <td className="py-2.5 px-4 text-right font-bold text-slate-900 text-sm sm:text-base">
-                      {formatNum(r.residualSquared, digits)}
-                    </td>
-                  </tr>
-                ))}
+                      <td className="py-2.5 px-4 text-right text-indigo-900 font-bold text-sm sm:text-base">
+                        {formatNum(r.yPred, digits)}
+                      </td>
+                      <td
+                        className={`py-2.5 px-4 text-right font-bold text-sm sm:text-base ${
+                          r.residual >= 0 ? 'text-emerald-700' : 'text-rose-700'
+                        }`}
+                      >
+                        {formatNum(r.residual, digits)}
+                      </td>
+                      <td className="py-2.5 px-4 text-right font-bold text-slate-900 text-sm sm:text-base">
+                        {formatNum(r.residualSquared, digits)}
+                      </td>
+                      <td className="py-2.5 px-4 text-right font-bold text-purple-950 bg-purple-50/20 text-sm sm:text-base">
+                        {formatNum(devY2, digits)}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
               <tfoot className="bg-slate-50 font-mono font-bold text-slate-800 border-t-2 border-slate-300">
                 <tr>
@@ -944,6 +1027,9 @@ export const MultipleRegressionView: React.FC<MultipleRegressionViewProps> = ({ 
                   </td>
                   <td className="py-3 px-4 text-right text-rose-800 text-sm sm:text-base">
                     {formatNum(result.sse, digits)} (SSE)
+                  </td>
+                  <td className="py-3 px-4 text-right text-purple-900 text-sm sm:text-base font-extrabold bg-purple-50/50">
+                    {formatNum(result.sst, digits)} (SST)
                   </td>
                 </tr>
               </tfoot>

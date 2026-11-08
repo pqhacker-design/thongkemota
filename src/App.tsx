@@ -51,8 +51,8 @@ export default function App() {
   const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [isStepsOpen, setIsStepsOpen] = useState(false);
 
-  // 1. Ungrouped Data State (Default sample from prompt: 5, 7, 8, 8, 9, 10, 12, 13, 15, 18)
-  const [rawText, setRawText] = useState<string>('5, 7, 8, 8, 9, 10, 12, 13, 15, 18');
+  // 1. Ungrouped Data State (Default sample: 5, 7, 8 (tần số 2), 9, 10, 12, 13, 15, 18)
+  const [rawText, setRawText] = useState<string>('5, 7, 8: 2, 9, 10, 12, 13, 15, 18');
 
   // 2. Grouped Data State (Default sample from prompt)
   const [groupRows, setGroupRows] = useState<GroupInterval[]>([
@@ -306,8 +306,8 @@ export default function App() {
               <div className="hidden lg:flex items-center gap-2 text-xs text-slate-500 pr-2">
                 <span>
                   {regressionTab === 'simple'
-                    ? '1 biến giải thích X · Phương trình y = a + bX · Hệ số Pearson r'
-                    : '2 đến 10 biến giải thích · Ma trận OLS β̂ = (XᵀX)⁻¹XᵀY · R² hiệu chỉnh'}
+                    ? '1 biến giải thích X · Phương trình Ŷ = a + bX · Hệ số Pearson r'
+                    : '2 đến 10 biến giải thích · Mặt phẳng 3D OLS · Ma trận β̂ = (XᵀX)⁻¹XᵀY · SST'}
                 </span>
               </div>
             </div>

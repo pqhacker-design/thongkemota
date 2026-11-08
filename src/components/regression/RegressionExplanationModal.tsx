@@ -185,12 +185,20 @@ export const RegressionExplanationModal: React.FC<RegressionExplanationModalProp
                   {type === 'simple' && simpleResult?.interpretation.rSquaredMeaning}
                   {type === 'multiple' && multipleResult?.interpretation.rSquaredMeaning}
                 </p>
-                {type === 'multiple' && multipleResult?.adjRSquared !== null && (
-                  <p className="text-xs text-teal-900 font-medium mt-2 pt-2 border-t border-teal-200">
-                    R² hiệu chỉnh (R²_adj) = {formatNum(multipleResult?.adjRSquared, digits)}:
-                    Phạt việc đưa thêm các biến giải thích không mang lại giá trị thực, cho phép so sánh khách quan các mô hình khác nhau.
+                <div className="text-xs text-teal-950 font-medium mt-2.5 pt-2.5 border-t border-teal-200 space-y-1.5">
+                  <div className="font-bold flex items-center justify-between">
+                    <span>Tổng bình phương độ lệch (SST):</span>
+                    <span className="font-mono bg-teal-100 text-teal-900 px-2 py-0.5 rounded text-xs font-extrabold">
+                      SST = {type === 'simple' ? formatNum(simpleResult?.sst, digits) : formatNum(multipleResult?.sst, digits)}
+                    </span>
+                  </div>
+                  <div className="font-mono bg-white/90 p-2 rounded-lg border border-teal-300 text-teal-950 text-xs sm:text-sm text-center font-extrabold tracking-wide shadow-2xs">
+                    SST = ∑ᵢ₌₁ⁿ (yᵢ - ȳ)²
+                  </div>
+                  <p className="text-[11px] text-teal-800 leading-relaxed">
+                    Công thức chuẩn: <strong>SST = ∑(yᵢ - ȳ)²</strong> đo lường tổng độ biến thiên của biến phụ thuộc Y quanh giá trị trung bình mẫu Ȳ. Trong phân tích phương sai hồi quy OLS, đại lượng này phân rã thành: <strong>SST = SSR + SSE</strong>.
                   </p>
-                )}
+                </div>
               </div>
             </div>
           </div>

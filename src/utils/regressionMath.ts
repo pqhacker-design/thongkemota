@@ -148,7 +148,7 @@ export function calculateSimpleLinearRegression(
   const b0Str = formatNum(b0, digits);
   const b1AbsStr = formatNum(Math.abs(b1), digits);
   const b1Sign = b1 >= 0 ? '+' : '-';
-  const equationString = `y = ${b0Str} ${b1Sign} ${b1AbsStr}X`;
+  const equationString = `Ŷ = ${b0Str} ${b1Sign} ${b1AbsStr}X`;
 
   // 9. Detailed Mathematical Interpretations
   const minX = Math.min(...points.map((p) => p.x));
@@ -169,7 +169,7 @@ export function calculateSimpleLinearRegression(
     b1TrendDesc = `Hệ số góc b < 0 (${formatNum(b1, digits)}): Y có xu hướng giảm tuyến tính khi X tăng. Cụ thể, khi X tăng thêm 1 đơn vị, giá trị dự đoán trung bình của Y giảm ${formatNum(Math.abs(b1), digits)} đơn vị.`;
   }
 
-  const b1Meaning = `${b1TrendDesc} (Lưu ý: Hệ số góc b phản ánh mức thay đổi của giá trị dự đoán trung bình y, không có nghĩa là mọi quan sát thực tế đều thay đổi đúng bằng b).`;
+  const b1Meaning = `${b1TrendDesc} (Lưu ý: Hệ số góc b phản ánh mức thay đổi của giá trị dự đoán trung bình Ŷ, không có nghĩa là mọi quan sát thực tế đều thay đổi đúng bằng b).`;
 
   let rDesc = '';
   const absR = Math.abs(pearsonR);
@@ -370,7 +370,7 @@ export function calculateMultipleLinearRegression(
   let degreeOfFreedomWarning: string | undefined = undefined;
 
   if (dfResidual <= 0) {
-    degreeOfFreedomWarning = `Cỡ mẫu n = ${n} không đủ bậc tự do so với số biến độc lập k = ${k} (cần n > k + 1 = ${k + 1}). Không thể xác định R² hiệu chỉnh và sai số chuẩn hồi quy SER.`;
+    degreeOfFreedomWarning = `Cỡ mẫu n = ${n} không đủ bậc tự do so với số biến độc lập k = ${k} (cần n > k + 1 = ${k + 1}). Không thể xác định sai số chuẩn hồi quy SER.`;
   } else {
     adjRSquared = 1 - ((1 - rSquared) * (n - 1)) / dfResidual;
     ser = Math.sqrt(sse / dfResidual);
@@ -379,7 +379,7 @@ export function calculateMultipleLinearRegression(
   const rmse = Math.sqrt(sse / n);
 
   // 5. Build Equation String
-  let eqStr = `y = ${formatNum(b0, digits)}`;
+  let eqStr = `Ŷ = ${formatNum(b0, digits)}`;
   for (let j = 0; j < k; j++) {
     const bVal = slopeCoeffs[j];
     const sign = bVal >= 0 ? '+' : '-';
@@ -428,11 +428,7 @@ export function calculateMultipleLinearRegression(
   const rMeaning = `Hệ số tương quan bội R = ${formatNum(multipleR, digits)}: Đo lường mức độ liên hệ tuyến tính tổng hợp giữa biến phụ thuộc Y và tập hợp ${k} biến độc lập (${variableNames.join(', ')}). R càng gần 1 chứng tỏ mối liên hệ tuyến tính tổng hợp càng chặt chẽ. (Lưu ý: Không được nhầm R với hệ số tương quan từng cặp Pearson r).`;
 
   const rSquaredPct = (rSquared * 100).toFixed(2);
-  const adjText =
-    adjRSquared !== null
-      ? ` Đồng thời, hệ số xác định hiệu chỉnh R²_adj = ${formatNum(adjRSquared, digits)} (${(adjRSquared * 100).toFixed(2)}%) đã trừ đi mức phạt do bổ sung thêm các biến độc lập vào mô hình.`
-      : '';
-  const rSquaredMeaning = `Hệ số xác định R² = ${formatNum(rSquared, digits)}: Cho biết mô hình hồi quy giải thích được ${rSquaredPct}% tổng biến thiên của biến phụ thuộc Y trong mẫu số liệu quan sát.${adjText}`;
+  const rSquaredMeaning = `Hệ số xác định R² = ${formatNum(rSquared, digits)}: Cho biết mô hình hồi quy giải thích được ${rSquaredPct}% tổng biến thiên của biến phụ thuộc Y trong mẫu số liệu quan sát (tương ứng biến thiên giải thích SSR = ${formatNum(ssr, digits)} trên tổng bình phương độ lệch SST = ${formatNum(sst, digits)}).`;
 
   const limitations = [
     'Điều kiện các biến khác giữ nguyên (Ceteris Paribus): Ý nghĩa của từng hệ số riêng phần bⱼ dựa trên giả định giữ cố định các biến còn lại. Trong thực tế, các biến độc lập thường có tương quan với nhau.',
