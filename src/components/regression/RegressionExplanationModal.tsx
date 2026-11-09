@@ -92,12 +92,20 @@ export const RegressionExplanationModal: React.FC<RegressionExplanationModalProp
             {type === 'simple' && simpleResult && (
               <div className="space-y-3">
                 <div className="bg-emerald-50/60 border border-emerald-200 rounded-lg p-3">
-                  <div className="font-bold text-emerald-900 text-sm sm:text-base">
-                    Hệ số chặn a = {formatNum(simpleResult.b0, digits)}
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="font-bold text-emerald-900 text-sm sm:text-base">
+                      Hệ số chặn a = {formatNum(simpleResult.b0, digits)}
+                    </div>
+                    <span className="font-mono text-xs bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded font-bold">
+                      a = ȳ - b·x̄
+                    </span>
                   </div>
                   <p className="text-xs sm:text-sm text-emerald-800 mt-1">
                     {simpleResult.interpretation.b0Meaning}
                   </p>
+                  <div className="font-mono text-xs text-emerald-900 mt-1.5 pt-1.5 border-t border-emerald-200/80">
+                    Cách tính: a = {formatNum(simpleResult.meanY, digits)} - ({formatNum(simpleResult.b1, digits)}) × {formatNum(simpleResult.meanX, digits)} = {formatNum(simpleResult.b0, digits)}
+                  </div>
                   {simpleResult.interpretation.b0Warning && (
                     <div className="flex items-center gap-1.5 text-xs text-amber-700 mt-1 font-medium bg-amber-50 p-1.5 rounded">
                       <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
@@ -107,12 +115,20 @@ export const RegressionExplanationModal: React.FC<RegressionExplanationModalProp
                 </div>
 
                 <div className="bg-blue-50/60 border border-blue-200 rounded-lg p-3">
-                  <div className="font-bold text-blue-900 text-sm sm:text-base">
-                    Hệ số góc b = {formatNum(simpleResult.b1, digits)}
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="font-bold text-blue-900 text-sm sm:text-base">
+                      Hệ số góc b = {formatNum(simpleResult.b1, digits)}
+                    </div>
+                    <span className="font-mono text-xs bg-blue-100 text-blue-900 px-2 py-0.5 rounded font-bold">
+                      b = Cov(X,Y) / Var(X)
+                    </span>
                   </div>
                   <p className="text-xs sm:text-sm text-blue-800 mt-1">
                     {simpleResult.interpretation.b1Meaning}
                   </p>
+                  <div className="font-mono text-xs text-blue-900 mt-1.5 pt-1.5 border-t border-blue-200/80">
+                    Cách tính: b = Cov(X, Y) / Var(X) = {formatNum(simpleResult.covXY, digits)} / {formatNum(simpleResult.varX, digits)} = {formatNum(simpleResult.b1, digits)}
+                  </div>
                   <p className="text-xs text-slate-500 italic mt-1">
                     * Lưu ý quan trọng: Hệ số góc b chỉ biểu thị tốc độ thay đổi <strong>trung bình theo mô hình tuyến tính</strong>, không khẳng định mọi cá thể quan sát đều thay đổi đúng bằng b đơn vị.
                   </p>
@@ -122,6 +138,19 @@ export const RegressionExplanationModal: React.FC<RegressionExplanationModalProp
 
             {type === 'multiple' && multipleResult && (
               <div className="space-y-3">
+                <div className="bg-teal-50/60 border border-teal-200 rounded-lg p-3">
+                  <div className="font-bold text-teal-950 text-sm sm:text-base">
+                    Cách tính toán hệ số hồi quy bội OLS (Normal Equations)
+                  </div>
+                  <p className="text-xs text-teal-900 mt-1">
+                    Các hệ số được tính từ hệ phương trình chuẩn OLS ma trận: <strong className="font-mono">(XᵀX)β̂ = XᵀY ⟺ β̂ = (XᵀX)⁻¹XᵀY</strong>.
+                  </p>
+                  <div className="mt-2 text-xs font-mono bg-white p-2 rounded border border-teal-200 text-teal-950">
+                    <div>• Hệ số chặn: <strong>b₀ = Ȳ - ∑ⱼ₌₁ᵏ bⱼX̄ⱼ</strong></div>
+                    <div className="mt-1">• Các hệ số riêng phần: <strong>bⱼ</strong> là nghiệm tương ứng trong vectơ <strong>β̂</strong>.</div>
+                  </div>
+                </div>
+
                 <div className="bg-emerald-50/60 border border-emerald-200 rounded-lg p-3">
                   <div className="font-bold text-emerald-900">
                     Hệ số chặn b₀ = {formatNum(multipleResult.coefficients[0].value, digits)}
@@ -185,9 +214,26 @@ export const RegressionExplanationModal: React.FC<RegressionExplanationModalProp
                   {type === 'simple' && simpleResult?.interpretation.rSquaredMeaning}
                   {type === 'multiple' && multipleResult?.interpretation.rSquaredMeaning}
                 </p>
+                {/* SSR Box */}
+                <div className="text-xs text-blue-950 font-medium mt-2.5 pt-2.5 border-t border-teal-200 space-y-1.5">
+                  <div className="font-bold flex items-center justify-between">
+                    <span>Tổng bình phương hồi quy (SSR):</span>
+                    <span className="font-mono bg-blue-100 text-blue-900 px-2 py-0.5 rounded text-xs font-extrabold">
+                      SSR = {type === 'simple' ? formatNum(simpleResult?.ssr, digits) : formatNum(multipleResult?.ssr, digits)}
+                    </span>
+                  </div>
+                  <div className="font-mono bg-white/90 p-2 rounded-lg border border-blue-300 text-blue-950 text-xs sm:text-sm text-center font-extrabold tracking-wide shadow-2xs">
+                    SSR = ∑ᵢ₌₁ⁿ (ŷᵢ - ȳ)²
+                  </div>
+                  <p className="text-[11px] text-blue-800 leading-relaxed">
+                    Công thức chuẩn: <strong>SSR = ∑(ŷᵢ - ȳ)²</strong> đo lường lượng biến thiên của biến phụ thuộc Y được mô hình hồi quy giải thích. Tỷ số <strong>R² = SSR / SST</strong> chính là hệ số xác định.
+                  </p>
+                </div>
+
+                {/* SST Box */}
                 <div className="text-xs text-teal-950 font-medium mt-2.5 pt-2.5 border-t border-teal-200 space-y-1.5">
                   <div className="font-bold flex items-center justify-between">
-                    <span>Tổng bình phương độ lệch (SST):</span>
+                    <span>Tổng bình phương độ lệch toàn phần (SST):</span>
                     <span className="font-mono bg-teal-100 text-teal-900 px-2 py-0.5 rounded text-xs font-extrabold">
                       SST = {type === 'simple' ? formatNum(simpleResult?.sst, digits) : formatNum(multipleResult?.sst, digits)}
                     </span>
@@ -196,7 +242,7 @@ export const RegressionExplanationModal: React.FC<RegressionExplanationModalProp
                     SST = ∑ᵢ₌₁ⁿ (yᵢ - ȳ)²
                   </div>
                   <p className="text-[11px] text-teal-800 leading-relaxed">
-                    Công thức chuẩn: <strong>SST = ∑(yᵢ - ȳ)²</strong> đo lường tổng độ biến thiên của biến phụ thuộc Y quanh giá trị trung bình mẫu Ȳ. Trong phân tích phương sai hồi quy OLS, đại lượng này phân rã thành: <strong>SST = SSR + SSE</strong>.
+                    Công thức chuẩn: <strong>SST = ∑(yᵢ - ȳ)²</strong> đo lường tổng độ biến thiên của Y quanh trung bình mẫu Ȳ. Trong phân tích phương sai hồi quy OLS: <strong>SST = SSR + SSE</strong>.
                   </p>
                 </div>
               </div>

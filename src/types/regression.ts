@@ -77,7 +77,11 @@ export interface MultipleRegressionResult {
     variableName: string; // 'Hệ số chặn', 'X1', 'X2', ...
     value: number;
     description: string;
+    formula?: string;
+    calculationSteps?: string;
   }[];
+  xtxMatrix?: number[][];
+  xtyVector?: number[];
   equationString: string;
   sse: number;
   ssr: number;

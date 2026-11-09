@@ -756,7 +756,17 @@ export const SimpleRegressionView: React.FC<SimpleRegressionViewProps> = ({ digi
                   <td className="py-3 px-4 text-right font-mono font-extrabold text-lg sm:text-xl text-emerald-950 tabular-nums">
                     {formatNum(result.b0, digits)}
                   </td>
-                  <td className="py-3 px-4 text-xs sm:text-sm text-slate-500">Điểm cắt trục tung của đường hồi quy khi X = 0</td>
+                  <td className="py-3 px-4 text-xs sm:text-sm text-slate-600">
+                    <div>Điểm cắt trục tung của đường hồi quy khi X = 0</div>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5 font-mono text-xs">
+                      <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded font-semibold">
+                        a = ȳ - b·x̄
+                      </span>
+                      <span className="text-slate-500">
+                        = {formatNum(result.meanY, digits)} - ({formatNum(result.b1, digits)}) × {formatNum(result.meanX, digits)} = {formatNum(result.b0, digits)}
+                      </span>
+                    </div>
+                  </td>
                 </tr>
 
                 <tr className="hover:bg-slate-50/70 transition-colors">
@@ -770,7 +780,17 @@ export const SimpleRegressionView: React.FC<SimpleRegressionViewProps> = ({ digi
                   <td className="py-3 px-4 text-right font-mono font-extrabold text-lg sm:text-xl text-sky-950 tabular-nums">
                     {formatNum(result.b1, digits)}
                   </td>
-                  <td className="py-3 px-4 text-xs sm:text-sm text-slate-500">Độ dốc: Thay đổi trung bình dự báo của Y khi X tăng thêm 1 đơn vị</td>
+                  <td className="py-3 px-4 text-xs sm:text-sm text-slate-600">
+                    <div>Độ dốc: Thay đổi trung bình dự báo của Y khi X tăng thêm 1 đơn vị</div>
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5 font-mono text-xs">
+                      <span className="bg-sky-50 text-sky-800 border border-sky-200 px-2 py-0.5 rounded font-semibold">
+                        b = Cov(X, Y) / Var(X) = Σ(x - x̄)(y - ȳ) / Σ(x - x̄)²
+                      </span>
+                      <span className="text-slate-500">
+                        = {formatNum(result.covXY, digits)} / {formatNum(result.varX, digits)} = {formatNum(result.b1, digits)}
+                      </span>
+                    </div>
+                  </td>
                 </tr>
 
                 <tr className="hover:bg-slate-50/70 transition-colors">
@@ -792,6 +812,20 @@ export const SimpleRegressionView: React.FC<SimpleRegressionViewProps> = ({ digi
 
                 <tr className="hover:bg-slate-50/70 transition-colors">
                   <td className="py-3 px-3 text-center font-mono text-slate-400 font-medium">9</td>
+                  <td className="py-3 px-4 text-sm sm:text-base font-semibold text-slate-800">Tổng bình phương hồi quy</td>
+                  <td className="py-3 px-4 text-center">
+                    <span className="font-mono text-base sm:text-lg px-3.5 py-1 rounded-md bg-blue-50 text-blue-900 font-bold border border-blue-200 shadow-2xs inline-block">
+                      SSR
+                    </span>
+                  </td>
+                  <td className="py-3 px-4 text-right font-mono font-extrabold text-lg sm:text-xl text-blue-950 tabular-nums">
+                    {formatNum(result.ssr, digits)}
+                  </td>
+                  <td className="py-3 px-4 text-xs sm:text-sm text-slate-500">Phần biến thiên giải thích bởi mô hình: SSR = ∑(ŷᵢ - ȳ)² (với SSR = SST - SSE)</td>
+                </tr>
+
+                <tr className="hover:bg-slate-50/70 transition-colors">
+                  <td className="py-3 px-3 text-center font-mono text-slate-400 font-medium">10</td>
                   <td className="py-3 px-4 text-sm sm:text-base font-semibold text-slate-800">Tổng bình phương phần dư</td>
                   <td className="py-3 px-4 text-center">
                     <span className="font-mono text-base sm:text-lg px-3.5 py-1 rounded-md bg-rose-50 text-rose-900 font-bold border border-rose-200 shadow-2xs inline-block">
@@ -801,11 +835,11 @@ export const SimpleRegressionView: React.FC<SimpleRegressionViewProps> = ({ digi
                   <td className="py-3 px-4 text-right font-mono font-extrabold text-lg sm:text-xl text-rose-950 tabular-nums">
                     {formatNum(result.sse, digits)}
                   </td>
-                  <td className="py-3 px-4 text-xs sm:text-sm text-slate-500">Tổng sai lệch không giải thích được giữa thực tế Y và Ŷ (∑eᵢ²)</td>
+                  <td className="py-3 px-4 text-xs sm:text-sm text-slate-500">Tổng sai lệch không giải thích được giữa thực tế Y và Ŷ (SSE = ∑eᵢ²)</td>
                 </tr>
 
                 <tr className="hover:bg-slate-50/70 transition-colors">
-                  <td className="py-3 px-3 text-center font-mono text-slate-400 font-medium">10</td>
+                  <td className="py-3 px-3 text-center font-mono text-slate-400 font-medium">11</td>
                   <td className="py-3 px-4 text-sm sm:text-base font-semibold text-slate-800">Tổng bình phương toàn phần</td>
                   <td className="py-3 px-4 text-center">
                     <span className="font-mono text-base sm:text-lg px-3.5 py-1 rounded-md bg-slate-100 text-slate-800 font-bold border border-slate-200 shadow-2xs inline-block">

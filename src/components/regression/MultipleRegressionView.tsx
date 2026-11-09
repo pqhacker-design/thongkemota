@@ -91,6 +91,7 @@ export const MultipleRegressionView: React.FC<MultipleRegressionViewProps> = ({ 
   const [copiedEq, setCopiedEq] = useState(false);
   const [copiedTable, setCopiedTable] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
+  const [showCalculationDetails, setShowCalculationDetails] = useState(true);
 
   // Sync prediction inputs array length with variableNames
   const k = variableNames.length;
@@ -710,13 +711,13 @@ export const MultipleRegressionView: React.FC<MultipleRegressionViewProps> = ({ 
 
               <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs flex flex-col justify-between">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">Tổng Hồi Quy</span>
+                  <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">Tổng Hồi Quy (SSR)</span>
                   <span className="font-mono text-base px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-900 font-bold border border-blue-200 shadow-2xs">SSR</span>
                 </div>
                 <div className="text-2xl sm:text-3xl font-extrabold font-mono text-blue-950 mt-2">
                   {formatNum(result.ssr, digits)}
                 </div>
-                <div className="text-[11px] text-slate-400 mt-1">Biến thiên giải thích</div>
+                <div className="text-[11px] text-blue-700 font-bold mt-1">SSR = ∑(ŷᵢ - ȳ)²</div>
               </div>
 
               <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs flex flex-col justify-between">
@@ -815,33 +816,136 @@ export const MultipleRegressionView: React.FC<MultipleRegressionViewProps> = ({ 
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 text-slate-700 border-y border-slate-200 font-bold uppercase text-xs tracking-wider">
-                  <th className="py-3 px-4 w-32 text-center font-mono">Hệ số (Ký hiệu)</th>
-                  <th className="py-3 px-4">Tên biến tương ứng</th>
-                  <th className="py-3 px-4 text-right">Giá trị ước lượng</th>
-                  <th className="py-3 px-4 text-slate-500 font-normal">Ý nghĩa thống kê & toán học</th>
+                  <th className="py-3 px-3 w-28 text-center font-mono">Hệ số (Ký hiệu)</th>
+                  <th className="py-3 px-3 min-w-[120px]">Tên biến</th>
+                  <th className="py-3 px-3 min-w-[220px]">Công thức & Cách tính</th>
+                  <th className="py-3 px-3 text-right min-w-[120px]">Giá trị ước lượng</th>
+                  <th className="py-3 px-3 text-slate-500 font-normal min-w-[200px]">Ý nghĩa kinh tế / thống kê</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {result.coefficients.map((coef, idx) => (
                   <tr key={idx} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-3 px-4 text-center">
-                      <span className="font-mono text-base sm:text-lg px-3.5 py-1 rounded-md bg-teal-50 text-teal-900 font-bold border border-teal-200 shadow-2xs inline-block">
+                    <td className="py-3 px-3 text-center">
+                      <span className="font-mono text-base sm:text-lg px-3 py-1 rounded-md bg-teal-50 text-teal-900 font-bold border border-teal-200 shadow-2xs inline-block">
                         {coef.name}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-sm sm:text-base font-semibold text-slate-800">
+                    <td className="py-3 px-3 text-sm font-semibold text-slate-800">
                       {coef.variableName}
                     </td>
-                    <td className="py-3 px-4 text-right font-mono font-extrabold text-lg sm:text-xl text-slate-900 tabular-nums">
+                    <td className="py-3 px-3">
+                      {idx === 0 ? (
+                        <div>
+                          <div className="font-mono text-xs font-bold text-teal-900 bg-teal-50/90 px-2 py-0.5 rounded border border-teal-200 inline-block shadow-2xs">
+                            b₀ = Ȳ - ∑ⱼ₌₁ᵏ bⱼX̄ⱼ
+                          </div>
+                          <div className="text-[11px] text-slate-500 font-mono mt-1 leading-snug">
+                            = {formatNum(result.means[k], digits)} - ({variableNames.map((_, j) => `${formatNum(result.coefficients[j + 1]?.value, 2)}×${formatNum(result.means[j], 2)}`).join(' + ')})
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="font-mono text-xs font-bold text-blue-900 bg-blue-50/90 px-2 py-0.5 rounded border border-blue-200 inline-block shadow-2xs">
+                            β̂ = (XᵀX)⁻¹XᵀY (Hàng #{idx + 1})
+                          </div>
+                          <div className="text-[11px] text-slate-500 mt-1 leading-snug">
+                            Nghiệm OLS riêng phần giải từ hệ phương trình chuẩn (XᵀX)β = XᵀY
+                          </div>
+                        </div>
+                      )}
+                    </td>
+                    <td className="py-3 px-3 text-right font-mono font-extrabold text-lg sm:text-xl text-slate-900 tabular-nums">
                       {formatNum(coef.value, digits)}
                     </td>
-                    <td className="py-3 px-4 text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    <td className="py-3 px-3 text-xs text-slate-600 leading-relaxed">
                       {coef.description}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Detailed Calculation & Normal Equations System */}
+          <div className="border border-slate-200 rounded-xl bg-slate-50/60 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                <Calculator className="w-4 h-4 text-teal-600" />
+                Cách Tính & Hệ Phương Trình Chuẩn OLS (Normal Equations)
+              </h4>
+              <button
+                onClick={() => setShowCalculationDetails(!showCalculationDetails)}
+                className="text-xs font-semibold text-teal-700 hover:text-teal-900 cursor-pointer"
+              >
+                {showCalculationDetails ? 'Thu gọn' : 'Xem chi tiết'}
+              </button>
+            </div>
+
+            {showCalculationDetails && (
+              <div className="space-y-3 text-xs text-slate-700 pt-1 border-t border-slate-200/80">
+                <p>
+                  Theo phương pháp <strong>Bình phương bé nhất (OLS)</strong>, vectơ hệ số hồi quy <span className="font-mono font-bold">β̂ = [b₀, b₁, ..., bₖ]ᵀ</span> được ước lượng bằng cách giải hệ phương trình chuẩn ma trận:
+                </p>
+                <div className="p-2.5 bg-white rounded-lg border border-slate-200 font-mono text-center font-bold text-slate-900 text-xs sm:text-sm shadow-2xs">
+                  (XᵀX) · β̂ = XᵀY &nbsp;⟺&nbsp; β̂ = (XᵀX)⁻¹ · XᵀY
+                </div>
+
+                {/* If k == 2, display classical 3-equation system */}
+                {k === 2 && result.xtxMatrix && result.xtyVector && (
+                  <div className="space-y-2 bg-white p-3.5 rounded-lg border border-teal-200">
+                    <div className="font-semibold text-teal-900">
+                      Hệ 3 phương trình chuẩn OLS cụ thể (2 biến độc lập {variableNames[0]}, {variableNames[1]}):
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 font-mono text-[11px] sm:text-xs">
+                      {/* Symbolic system */}
+                      <div className="bg-slate-50 p-2.5 rounded border border-slate-200 space-y-1">
+                        <div className="text-slate-500 font-sans font-bold text-[10px] uppercase">Dạng tổng quát lý thuyết:</div>
+                        <div>⎧ n·b₀ + (∑X₁)·b₁ + (∑X₂)·b₂ = ∑Y</div>
+                        <div>⎨ (∑X₁)·b₀ + (∑X₁²)·b₁ + (∑X₁X₂)·b₂ = ∑X₁Y</div>
+                        <div>⎩ (∑X₂)·b₀ + (∑X₁X₂)·b₁ + (∑X₂²)·b₂ = ∑X₂Y</div>
+                      </div>
+
+                      {/* Numeric substituted system */}
+                      <div className="bg-teal-50/60 p-2.5 rounded border border-teal-200 space-y-1 text-teal-950 font-bold">
+                        <div className="text-teal-800 font-sans font-bold text-[10px] uppercase">Thế số từ mẫu dữ liệu (n = {result.n}):</div>
+                        <div>⎧ {formatNum(result.xtxMatrix[0][0], 1)}·b₀ + {formatNum(result.xtxMatrix[0][1], 2)}·b₁ + {formatNum(result.xtxMatrix[0][2], 2)}·b₂ = {formatNum(result.xtyVector[0], 2)}</div>
+                        <div>⎨ {formatNum(result.xtxMatrix[1][0], 2)}·b₀ + {formatNum(result.xtxMatrix[1][1], 2)}·b₁ + {formatNum(result.xtxMatrix[1][2], 2)}·b₂ = {formatNum(result.xtyVector[1], 2)}</div>
+                        <div>⎩ {formatNum(result.xtxMatrix[2][0], 2)}·b₀ + {formatNum(result.xtxMatrix[2][1], 2)}·b₁ + {formatNum(result.xtxMatrix[2][2], 2)}·b₂ = {formatNum(result.xtyVector[2], 2)}</div>
+                      </div>
+                    </div>
+                    <div className="text-[11px] text-teal-800 font-medium pt-1">
+                      Giải hệ phương trình bằng phương pháp khử Gauss hoặc ma trận nghịch đảo ta được nghiệm:
+                      <span className="font-mono font-bold text-slate-900 ml-1">
+                        b₀ = {formatNum(result.coefficients[0].value, digits)}, b₁ = {formatNum(result.coefficients[1].value, digits)}, b₂ = {formatNum(result.coefficients[2].value, digits)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* If k > 2, show matrix dimensions and XTX, XTY breakdown */}
+                {k > 2 && result.xtxMatrix && result.xtyVector && (
+                  <div className="bg-white p-3 rounded-lg border border-slate-200 space-y-2">
+                    <div className="font-semibold text-slate-800">
+                      Ma trận hệ số thực tế ({k + 1} × {k + 1}) và vectơ vế phải ({k + 1} × 1):
+                    </div>
+                    <p className="text-[11px] text-slate-500">
+                      Ma trận XᵀX chứa cỡ mẫu n và các tổng bình phương, tổng tích chéo: ∑Xⱼ, ∑Xⱼ², ∑XᵢXⱼ. Vectơ XᵀY chứa tổng biến phụ thuộc ∑Y và tổng tích chéo ∑XⱼY.
+                    </p>
+                    <div className="flex flex-wrap gap-2 text-xs font-mono">
+                      <div className="bg-slate-50 p-2 rounded border border-slate-200">
+                        <span className="font-bold text-slate-700">∑Y = {formatNum(result.xtyVector[0], 2)}</span>
+                      </div>
+                      {variableNames.map((name, idx) => (
+                        <div key={idx} className="bg-slate-50 p-2 rounded border border-slate-200">
+                          <span>∑{name} = {formatNum(result.xtxMatrix![0][idx + 1], 2)} | ∑{name}Y = {formatNum(result.xtyVector![idx + 1], 2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

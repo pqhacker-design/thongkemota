@@ -386,19 +386,22 @@ export function calculateMultipleLinearRegression(
     eqStr += ` ${sign} ${formatNum(Math.abs(bVal), digits)}${variableNames[j]}`;
   }
 
-  // 6. Detailed Interpretations
   const coefficients = [
     {
       name: 'b₀',
       variableName: 'Hệ số chặn (Intercept)',
       value: b0,
       description: 'Giá trị dự đoán trung bình của Y khi tất cả các biến độc lập đều bằng 0',
+      formula: 'b₀ = Ȳ - ∑ⱼ₌₁ᵏ bⱼX̄ⱼ',
+      calculationSteps: `Ȳ - (${variableNames.map((_, j) => `${formatNum(slopeCoeffs[j], digits)}×${formatNum(means[j], digits)}`).join(' + ')})`,
     },
     ...variableNames.map((name, j) => ({
       name: `b${j + 1}`,
       variableName: `Hệ số riêng phần của ${name}`,
       value: slopeCoeffs[j],
       description: `Mức thay đổi dự đoán của Y khi ${name} tăng 1 đơn vị (các biến khác giữ nguyên)`,
+      formula: `Nghiệm OLS: β̂ = (XᵀX)⁻¹XᵀY`,
+      calculationSteps: `Phần tử [${j + 1}] của vectơ β̂ giải từ hệ phương trình chuẩn (XᵀX)β = XᵀY`,
     })),
   ];
 
@@ -452,6 +455,8 @@ export function calculateMultipleLinearRegression(
       matrix: covMatrix,
     },
     coefficients,
+    xtxMatrix: XTX,
+    xtyVector: XTY,
     equationString: eqStr,
     sse,
     ssr,
